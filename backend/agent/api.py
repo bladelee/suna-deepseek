@@ -924,8 +924,10 @@ async def generate_and_update_project_name(project_id: str, prompt: str):
     try:
         db_conn = DBConnection()
         client = await db_conn.client
-
-        model_name = "openai/gpt-4o-mini"
+        
+        # model_name = "openai/gpt-4o-mini"
+        # Use system default model instead of hardcoded OpenAI model
+        model_name = config.DEFAULT_MODEL
         system_prompt = "You are a helpful assistant that generates extremely concise titles (2-4 words maximum) for chat threads based on the user's message. Respond with only the title, no other text or punctuation."
         user_message = f"Generate an extremely brief title (2-4 words only) for a chat thread that starts with this message: \"{prompt}\""
         messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_message}]
@@ -987,7 +989,7 @@ async def initiate_agent_with_files(
     logger.debug(f"Original model_name from request: {model_name}")
 
     if model_name is None:
-        model_name = "openai/gpt-5-mini"
+        model_name = config.DEFAULT_MODEL
         logger.debug(f"Using default model: {model_name}")
 
     # Log the model name after alias resolution

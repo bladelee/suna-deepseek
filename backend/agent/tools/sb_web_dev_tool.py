@@ -48,7 +48,7 @@ class SandboxWebDevTool(SandboxToolsBase):
         
         response = await self.sandbox.process.execute_session_command(
             session_id=session_id,
-            req=req,
+            request=req,
             timeout=timeout
         )
         

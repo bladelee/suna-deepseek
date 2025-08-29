@@ -2,6 +2,7 @@ import asyncio
 from agentpress.thread_manager import ThreadManager
 from agentpress.tool import Tool, ToolResult, openapi_schema, usage_example
 from agentpress.response_processor import ProcessorConfig
+from utils.config import config
 
 class CalculatorTool(Tool):
     @openapi_schema({
@@ -155,7 +156,7 @@ Available tools:
             thread_id=thread_id,
             system_prompt=system_prompt,
             stream=True,
-            llm_model="gpt-5",
+            llm_model=config.DEFAULT_MODEL,
             processor_config=ProcessorConfig(
                 xml_tool_calling=True,
                 execute_tools=True,

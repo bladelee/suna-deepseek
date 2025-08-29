@@ -19,10 +19,14 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    dns:
+      - 8.8.8.8        # 谷歌公共 DNS
+      - 114.114.114.114  # 国内公共 DNS
     ports:
       - "8000:8000"
     volumes:
       - ./backend/.env:/app/.env
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     env_file:
       - ./backend/.env
     environment:
@@ -30,6 +34,9 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=
       - REDIS_SSL=False
+      - LOG_LEVEL=DEBUG
+      - USE_LOCAL_DOCKER_SANDBOX=true
+      - DOCKER_HOST=unix:///var/run/docker.sock        
     depends_on:
       redis:
         condition: service_healthy
@@ -45,6 +52,10 @@ services:
     command: uv run dramatiq --skip-logging --processes 4 --threads 4 run_agent_background
     volumes:
       - ./backend/.env:/app/.env:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro      
+    dns:
+      - 8.8.8.8        # 谷歌公共 DNS
+      - 114.114.114.114  # 国内公共 DNS
     env_file:
       - ./backend/.env
     environment:
@@ -52,6 +63,9 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=
       - REDIS_SSL=False
+      - LOG_LEVEL=DEBUG
+      - USE_LOCAL_DOCKER_SANDBOX=true
+      - DOCKER_HOST=unix:///var/run/docker.sock           
     depends_on:
       redis:
         condition: service_healthy

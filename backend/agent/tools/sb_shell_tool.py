@@ -121,72 +121,13 @@ class SandboxShellTool(SandboxToolsBase):
             if not session_name:
                 session_name = f"session_{str(uuid4())[:8]}"
             
-            # Check if tmux session already exists
-            check_session = await self._execute_raw_command(f"tmux has-session -t {session_name} 2>/dev/null || echo 'not_exists'")
-            session_exists = "not_exists" not in check_session.get("output", "")
-            
-            if not session_exists:
-                # Create a new tmux session with the specified working directory
-                await self._execute_raw_command(f"tmux new-session -d -s {session_name} -c {cwd}")
-            
-            # Escape double quotes for the command
-            wrapped_command = command.replace('"', '\\"')
-            
-            if blocking:
-                # For blocking execution, use a more reliable approach
-                # Add a unique marker to detect command completion
-                marker = f"COMMAND_DONE_{str(uuid4())[:8]}"
-                completion_command = self._format_completion_command(command, marker)
-                wrapped_completion_command = completion_command.replace('"', '\\"')
-                
-                # Send the command with completion marker
-                await self._execute_raw_command(f'tmux send-keys -t {session_name} "{wrapped_completion_command}" Enter')
-                
-                start_time = time.time()
-                final_output = ""
-                
-                while (time.time() - start_time) < timeout:
-                    # Wait a shorter interval for more responsive checking
-                    await asyncio.sleep(0.5)
-                    
-                    # Check if session still exists (command might have exited)
-                    check_result = await self._execute_raw_command(f"tmux has-session -t {session_name} 2>/dev/null || echo 'ended'")
-                    if "ended" in check_result.get("output", ""):
-                        break
-                        
-                    # Get current output and check for our completion marker
-                    output_result = await self._execute_raw_command(f"tmux capture-pane -t {session_name} -p -S - -E -")
-                    current_output = output_result.get("output", "")
-
-                    if self._is_command_completed(current_output, marker):
-                        final_output = current_output
-                        break
-                
-                # If we didn't get the marker, capture whatever output we have
-                if not final_output:
-                    output_result = await self._execute_raw_command(f"tmux capture-pane -t {session_name} -p -S - -E -")
-                    final_output = output_result.get("output", "")
-                
-                # Kill the session after capture
-                await self._execute_raw_command(f"tmux kill-session -t {session_name}")
-                
-                return self.success_response({
-                    "output": final_output,
-                    "session_name": session_name,
-                    "cwd": cwd,
-                    "completed": True
-                })
+            # Check if this is a Docker sandbox (local) or Daytona sandbox (remote)
+            if hasattr(self.sandbox, 'container_id'):
+                # Local Docker sandbox - use direct execution
+                return await self._execute_in_docker(command, cwd, blocking, timeout, session_name)
             else:
-                # Send command to tmux session for non-blocking execution
-                await self._execute_raw_command(f'tmux send-keys -t {session_name} "{wrapped_command}" Enter')
-                
-                # For non-blocking, just return immediately
-                return self.success_response({
-                    "session_name": session_name,
-                    "cwd": cwd,
-                    "message": f"Command sent to tmux session '{session_name}'. Use check_command_output to view results.",
-                    "completed": False
-                })
+                # Remote Daytona sandbox - use tmux sessions
+                return await self._execute_in_tmux(command, cwd, blocking, timeout, session_name)
                 
         except Exception as e:
             # Attempt to clean up session in case of error
@@ -199,32 +140,60 @@ class SandboxShellTool(SandboxToolsBase):
 
     async def _execute_raw_command(self, command: str) -> Dict[str, Any]:
         """Execute a raw command directly in the sandbox."""
-        # Ensure session exists for raw commands
-        session_id = await self._ensure_session("raw_commands")
+        await self._ensure_sandbox()
         
-        # Execute command in session
-        from daytona_sdk import SessionExecuteRequest
-        req = SessionExecuteRequest(
-            command=command,
-            var_async=False,
-            cwd=self.workspace_path
-        )
-        
-        response = await self.sandbox.process.execute_session_command(
-            session_id=session_id,
-            req=req,
-            timeout=30  # Short timeout for utility commands
-        )
-        
-        logs = await self.sandbox.process.get_session_command_logs(
-            session_id=session_id,
-            command_id=response.cmd_id
-        )
-        
-        return {
-            "output": logs,
-            "exit_code": response.exit_code
-        }
+        # Check if this is a Docker sandbox (local) or Daytona sandbox (remote)
+        if hasattr(self.sandbox, 'container_id'):
+            # Local Docker sandbox - use direct exec
+            try:
+                # Use bash for better shell features including pipes
+                resp = await self.sandbox.process.exec(f"/bin/bash -c \"{command}\"", timeout=30)
+                # Docker sandbox exec returns string directly, not an object
+                output = resp if isinstance(resp, str) else str(resp) if resp else ""
+                return {
+                    "output": output,
+                    "exit_code": 0  # Docker exec doesn't return exit code, assume success
+                }
+            except Exception as e:
+                logger.error(f"Error executing raw command '{command}' in Docker sandbox: {e}")
+                return {
+                    "output": f"Error executing command: {str(e)}",
+                    "exit_code": 1
+                }
+        else:
+            # Remote Daytona sandbox - use session-based execution
+            try:
+                session_id = await self._ensure_session("raw_commands")
+                
+                # Execute command in session
+                from daytona_sdk import SessionExecuteRequest
+                req = SessionExecuteRequest(
+                    command=command,
+                    var_async=False,
+                    cwd=self.workspace_path
+                )
+                
+                response = await self.sandbox.process.execute_session_command(
+                    session_id=session_id,
+                    request=req,
+                    timeout=30  # Short timeout for utility commands
+                )
+                
+                logs = await self.sandbox.process.get_session_command_logs(
+                    session_id=session_id,
+                    command_id=response.cmd_id
+                )
+                
+                return {
+                    "output": logs,
+                    "exit_code": response.exit_code
+                }
+            except Exception as e:
+                logger.error(f"Error executing raw command '{command}' in Daytona sandbox: {e}")
+                return {
+                    "output": f"Error executing command: {str(e)}",
+                    "exit_code": 1
+                }
 
     @openapi_schema({
         "type": "function",
@@ -272,27 +241,13 @@ class SandboxShellTool(SandboxToolsBase):
             # Ensure sandbox is initialized
             await self._ensure_sandbox()
             
-            # Check if session exists
-            check_result = await self._execute_raw_command(f"tmux has-session -t {session_name} 2>/dev/null || echo 'not_exists'")
-            if "not_exists" in check_result.get("output", ""):
-                return self.fail_response(f"Tmux session '{session_name}' does not exist.")
-            
-            # Get output from tmux pane
-            output_result = await self._execute_raw_command(f"tmux capture-pane -t {session_name} -p -S - -E -")
-            output = output_result.get("output", "")
-            
-            # Kill session if requested
-            if kill_session:
-                await self._execute_raw_command(f"tmux kill-session -t {session_name}")
-                termination_status = "Session terminated."
+            # Check if this is a Docker sandbox (local) or Daytona sandbox (remote)
+            if hasattr(self.sandbox, 'container_id'):
+                # Local Docker sandbox - sessions are not persistent, return error
+                return self.fail_response(f"Session '{session_name}' not available in Docker sandbox. Sessions are not persistent in local environment.")
             else:
-                termination_status = "Session still running."
-            
-            return self.success_response({
-                "output": output,
-                "session_name": session_name,
-                "status": termination_status
-            })
+                # Remote Daytona sandbox - use tmux sessions
+                return await self._check_tmux_command_output(session_name, kill_session)
                 
         except Exception as e:
             return self.fail_response(f"Error checking command output: {str(e)}")
@@ -329,17 +284,13 @@ class SandboxShellTool(SandboxToolsBase):
             # Ensure sandbox is initialized
             await self._ensure_sandbox()
             
-            # Check if session exists
-            check_result = await self._execute_raw_command(f"tmux has-session -t {session_name} 2>/dev/null || echo 'not_exists'")
-            if "not_exists" in check_result.get("output", ""):
-                return self.fail_response(f"Tmux session '{session_name}' does not exist.")
-            
-            # Kill the session
-            await self._execute_raw_command(f"tmux kill-session -t {session_name}")
-            
-            return self.success_response({
-                "message": f"Tmux session '{session_name}' terminated successfully."
-            })
+            # Check if this is a Docker sandbox (local) or Daytona sandbox (remote)
+            if hasattr(self.sandbox, 'container_id'):
+                # Local Docker sandbox - sessions are not persistent, return error
+                return self.fail_response(f"Session '{session_name}' not available in Docker sandbox. Sessions are not persistent in local environment.")
+            else:
+                # Remote Daytona sandbox - use tmux sessions
+                return await self._terminate_tmux_command(session_name)
                 
         except Exception as e:
             return self.fail_response(f"Error terminating command: {str(e)}")
@@ -366,29 +317,16 @@ class SandboxShellTool(SandboxToolsBase):
             # Ensure sandbox is initialized
             await self._ensure_sandbox()
             
-            # List all tmux sessions
-            result = await self._execute_raw_command("tmux list-sessions 2>/dev/null || echo 'No sessions'")
-            output = result.get("output", "")
-            
-            if "No sessions" in output or not output.strip():
+            # Check if this is a Docker sandbox (local) or Daytona sandbox (remote)
+            if hasattr(self.sandbox, 'container_id'):
+                # Local Docker sandbox - sessions are not persistent, return empty list
                 return self.success_response({
-                    "message": "No active tmux sessions found.",
+                    "message": "No active sessions in Docker sandbox. Sessions are not persistent in local environment.",
                     "sessions": []
                 })
-            
-            # Parse session list
-            sessions = []
-            for line in output.split('\n'):
-                if line.strip():
-                    parts = line.split(':')
-                    if parts:
-                        session_name = parts[0].strip()
-                        sessions.append(session_name)
-            
-            return self.success_response({
-                "message": f"Found {len(sessions)} active sessions.",
-                "sessions": sessions
-            })
+            else:
+                # Remote Daytona sandbox - use tmux sessions
+                return await self._list_tmux_commands()
                 
         except Exception as e:
             return self.fail_response(f"Error listing commands: {str(e)}")
@@ -490,9 +428,195 @@ class SandboxShellTool(SandboxToolsBase):
         for session_name in list(self._sessions.keys()):
             await self._cleanup_session(session_name)
         
-        # Also clean up any tmux sessions
+        # Clean up tmux sessions only in Daytona sandbox
         try:
             await self._ensure_sandbox()
-            await self._execute_raw_command("tmux kill-server 2>/dev/null || true")
+            if not hasattr(self.sandbox, 'container_id'):
+                # Only cleanup tmux in remote Daytona sandbox
+                await self._execute_raw_command("tmux kill-server 2>/dev/null || true")
         except:
             pass
+
+    async def _execute_in_docker(self, command: str, cwd: str, blocking: bool, timeout: int, session_name: str) -> ToolResult:
+        """Execute command in Docker sandbox using direct exec."""
+        try:
+            if blocking:
+                # For blocking execution, execute command directly with timeout
+                # Docker sandbox exec already sets workdir="/workspace", so we don't need cd
+                # Use bash for better shell features including pipes
+                full_command = command
+                
+                # Use bash for better shell features including pipes
+                resp = await self.sandbox.process.exec(f"/bin/bash -c \"{full_command}\"", timeout=timeout)
+                # Docker sandbox exec returns string directly, not an object
+                output = resp if isinstance(resp, str) else str(resp) if resp else ""
+                
+                return self.success_response({
+                    "output": output,
+                    "session_name": session_name,
+                    "cwd": cwd,
+                    "completed": True
+                })
+            else:
+                # For non-blocking execution, start command in background
+                full_command = f"cd {cwd} && {command} &"
+                resp = await self.sandbox.process.exec(f"/bin/sh -c \"{full_command}\"", timeout=30)
+                
+                return self.success_response({
+                    "session_name": session_name,
+                    "cwd": cwd,
+                    "message": f"Command started in background in Docker sandbox. Session name: {session_name}",
+                    "completed": False
+                })
+                
+        except Exception as e:
+            return self.fail_response(f"Error executing command in Docker sandbox: {str(e)}")
+
+    async def _execute_in_tmux(self, command: str, cwd: str, blocking: bool, timeout: int, session_name: str) -> ToolResult:
+        """Execute command in Daytona sandbox using tmux sessions."""
+        try:
+            # Check if tmux session already exists
+            check_session = await self._execute_raw_command(f"tmux has-session -t {session_name} 2>/dev/null || echo 'not_exists'")
+            session_exists = "not_exists" not in check_session.get("output", "")
+            
+            if not session_exists:
+                # Create a new tmux session with the specified working directory
+                await self._execute_raw_command(f"tmux new-session -d -s {session_name} -c {cwd}")
+            
+            # Escape double quotes for the command
+            wrapped_command = command.replace('"', '\\"')
+            
+            if blocking:
+                # For blocking execution, use a more reliable approach
+                # Add a unique marker to detect command completion
+                marker = f"COMMAND_DONE_{str(uuid4())[:8]}"
+                completion_command = self._format_completion_command(command, marker)
+                wrapped_completion_command = completion_command.replace('"', '\\"')
+                
+                # Send the command with completion marker
+                await self._execute_raw_command(f'tmux send-keys -t {session_name} "{wrapped_completion_command}" Enter')
+                
+                start_time = time.time()
+                final_output = ""
+                
+                while (time.time() - start_time) < timeout:
+                    # Wait a shorter interval for more responsive checking
+                    await asyncio.sleep(0.5)
+                    
+                    # Check if session still exists (command might have exited)
+                    check_result = await self._execute_raw_command(f"tmux has-session -t {session_name} 2>/dev/null || echo 'ended'")
+                    if "ended" in check_result.get("output", ""):
+                        break
+                        
+                    # Get current output and check for our completion marker
+                    output_result = await self._execute_raw_command(f"tmux capture-pane -t {session_name} -p -S - -E -")
+                    current_output = output_result.get("output", "")
+
+                    if self._is_command_completed(current_output, marker):
+                        final_output = current_output
+                        break
+                
+                # If we didn't get the marker, capture whatever output we have
+                if not final_output:
+                    output_result = await self._execute_raw_command(f"tmux capture-pane -t {session_name} -p -S - -E -")
+                    final_output = output_result.get("output", "")
+                
+                # Kill the session after capture
+                await self._execute_raw_command(f"tmux kill-session -t {session_name}")
+                
+                return self.success_response({
+                    "output": final_output,
+                    "session_name": session_name,
+                    "cwd": cwd,
+                    "completed": True
+                })
+            else:
+                # Send command to tmux session for non-blocking execution
+                await self._execute_raw_command(f'tmux send-keys -t {session_name} "{wrapped_command}" Enter')
+                
+                # For non-blocking, just return immediately
+                return self.success_response({
+                    "session_name": session_name,
+                    "cwd": cwd,
+                    "message": f"Command sent to tmux session '{session_name}'. Use check_command_output to view results.",
+                    "completed": False
+                })
+                
+        except Exception as e:
+            return self.fail_response(f"Error executing command in tmux: {str(e)}")
+
+    async def _check_tmux_command_output(self, session_name: str, kill_session: bool) -> ToolResult:
+        """Check tmux command output in Daytona sandbox."""
+        try:
+            # Check if session exists
+            check_result = await self._execute_raw_command(f"tmux has-session -t {session_name} 2>/dev/null || echo 'not_exists'")
+            if "not_exists" in check_result.get("output", ""):
+                return self.fail_response(f"Tmux session '{session_name}' does not exist.")
+            
+            # Get output from tmux pane
+            output_result = await self._execute_raw_command(f"tmux capture-pane -t {session_name} -p -S - -E -")
+            output = output_result.get("output", "")
+            
+            # Kill session if requested
+            if kill_session:
+                await self._execute_raw_command(f"tmux kill-session -t {session_name}")
+                termination_status = "Session terminated."
+            else:
+                termination_status = "Session still running."
+            
+            return self.success_response({
+                "output": output,
+                "session_name": session_name,
+                "status": termination_status
+            })
+                
+        except Exception as e:
+            return self.fail_response(f"Error checking tmux command output: {str(e)}")
+
+    async def _terminate_tmux_command(self, session_name: str) -> ToolResult:
+        """Terminate tmux command in Daytona sandbox."""
+        try:
+            # Check if session exists
+            check_result = await self._execute_raw_command(f"tmux has-session -t {session_name} 2>/dev/null || echo 'not_exists'")
+            if "not_exists" in check_result.get("output", ""):
+                return self.fail_response(f"Tmux session '{session_name}' does not exist.")
+            
+            # Kill the session
+            await self._execute_raw_command(f"tmux kill-session -t {session_name}")
+            
+            return self.success_response({
+                "message": f"Tmux session '{session_name}' terminated successfully."
+            })
+                
+        except Exception as e:
+            return self.fail_response(f"Error terminating tmux command: {str(e)}")
+
+    async def _list_tmux_commands(self) -> ToolResult:
+        """List tmux commands in Daytona sandbox."""
+        try:
+            # List all tmux sessions
+            result = await self._execute_raw_command("tmux list-sessions 2>/dev/null || echo 'No sessions'")
+            output = result.get("output", "")
+            
+            if "No sessions" in output or not output.strip():
+                return self.success_response({
+                    "message": "No active tmux sessions found.",
+                    "sessions": []
+                })
+            
+            # Parse session list
+            sessions = []
+            for line in output.split('\n'):
+                if line.strip():
+                    parts = line.split(':')
+                    if parts:
+                        session_name = parts[0].strip()
+                        sessions.append(session_name)
+            
+            return self.success_response({
+                "message": f"Found {len(sessions)} active sessions.",
+                "sessions": sessions
+            })
+                
+        except Exception as e:
+            return self.fail_response(f"Error listing tmux commands: {str(e)}")

@@ -235,6 +235,7 @@ class Configuration:
     XAI_API_KEY: Optional[str] = None
     MORPH_API_KEY: Optional[str] = None
     GEMINI_API_KEY: Optional[str] = None
+    DEEPSEEK_API_KEY: Optional[str] = None
     OPENROUTER_API_BASE: Optional[str] = "https://openrouter.ai/api/v1"
     OR_SITE_URL: Optional[str] = "https://kortix.ai"
     OR_APP_NAME: Optional[str] = "Kortix AI"    
@@ -258,9 +259,15 @@ class Configuration:
     REDIS_SSL: bool = True
     
     # Daytona sandbox configuration
-    DAYTONA_API_KEY: str
-    DAYTONA_SERVER_URL: str
-    DAYTONA_TARGET: str
+    DAYTONA_API_KEY: Optional[str] = None
+    DAYTONA_SERVER_URL: Optional[str] = None
+    DAYTONA_TARGET: Optional[str] = None
+    
+    # Local Docker sandbox configuration
+    USE_LOCAL_DOCKER_SANDBOX: bool = False
+    DOCKER_HOST: Optional[str] = None
+    DOCKER_CERT_PATH: Optional[str] = None
+    DOCKER_TLS_VERIFY: bool = False
     
     # Search and other API keys
     TAVILY_API_KEY: str
@@ -292,6 +299,9 @@ class Configuration:
     # Admin API key for server-side operations
     KORTIX_ADMIN_API_KEY: Optional[str] = None
 
+    # Default model configuration
+    DEFAULT_MODEL: str = "deepseek/deepseek-chat"  # Default to DeepSeek for better Chinese support
+    
     # API Keys system configuration
     API_KEY_SECRET: str = "default-secret-key-change-in-production"
     API_KEY_LAST_USED_THROTTLE_SECONDS: int = 900

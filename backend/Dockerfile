@@ -1,6 +1,9 @@
-FROM ghcr.io/astral-sh/uv:python3.11-alpine
+# FROM ghcr.io/astral-sh/uv:python3.11-alpine
+FROM ghcr.nju.edu.cn/astral-sh/uv:python3.11-alpine
 
 ENV ENV_MODE production
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 WORKDIR /app
 
 RUN apk add --no-cache curl git
@@ -8,7 +11,20 @@ RUN apk add --no-cache curl git
 # Install Python dependencies
 COPY pyproject.toml uv.lock ./
 ENV UV_LINK_MODE=copy
-RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --quiet
+ENV UV_CACHE_DIR=/root/.cache/uv
+
+# Create a minimal .env file for build context
+RUN echo "ENV_MODE=production" > .env && \
+    echo "USE_LOCAL_DOCKER_SANDBOX=true" >> .env && \
+    echo "REDIS_HOST=redis" >> .env && \
+    echo "REDIS_PORT=6379" >> .env && \
+    echo "LOG_LEVEL=INFO" >> .env
+
+# Install dependencies - allow uv to update lockfile if needed
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --quiet || \
+    (echo "uv sync failed, trying without cache..." && \
+     uv sync --quiet)
 
 # Copy application code
 COPY . .

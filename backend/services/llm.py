@@ -30,7 +30,7 @@ class LLMError(Exception):
 
 def setup_api_keys() -> None:
     """Set up API keys from environment variables."""
-    providers = ['OPENAI', 'ANTHROPIC', 'GROQ', 'OPENROUTER', 'XAI', 'MORPH', 'GEMINI']
+    providers = ['OPENAI', 'ANTHROPIC', 'GROQ', 'OPENROUTER', 'XAI', 'MORPH', 'GEMINI', 'DEEPSEEK']
     for provider in providers:
         key = getattr(config, f'{provider}_API_KEY')
         if key:
@@ -69,6 +69,8 @@ def get_openrouter_fallback(model_name: str) -> Optional[str]:
         "anthropic/claude-sonnet-4-20250514": "openrouter/anthropic/claude-sonnet-4",
         "xai/grok-4": "openrouter/x-ai/grok-4",
         "gemini/gemini-2.5-pro": "openrouter/google/gemini-2.5-pro",
+        "deepseek/deepseek-chat": "openrouter/deepseek/deepseek-chat",
+        "deepseek/deepseek-coder": "openrouter/deepseek/deepseek-coder",
     }
     
     # Check for exact match first
@@ -85,6 +87,8 @@ def get_openrouter_fallback(model_name: str) -> Optional[str]:
         return "openrouter/anthropic/claude-sonnet-4"
     elif "xai" in model_name.lower() or "grok" in model_name.lower():
         return "openrouter/x-ai/grok-4"
+    elif "deepseek" in model_name.lower():
+        return "openrouter/deepseek/deepseek-chat"
     
     return None
 
@@ -220,6 +224,22 @@ def _configure_thinking(params: Dict[str, Any], model_name: str, enable_thinking
         params["reasoning_effort"] = effort_level
         logger.info(f"xAI thinking enabled with reasoning_effort='{effort_level}'")
 
+def _configure_deepseek(params: Dict[str, Any], model_name: str) -> None:
+    """Configure DeepSeek-specific parameters."""
+    if not model_name.startswith("deepseek/"):
+        return
+    
+    # DeepSeek models support specific parameters
+    logger.debug(f"Configuring DeepSeek-specific parameters for model: {model_name}")
+    
+    # DeepSeek models work well with these settings
+    if "temperature" not in params:
+        params["temperature"] = 0.7
+    
+    # Ensure proper API base for DeepSeek
+    if not params.get("api_base"):
+        params["api_base"] = "https://api.deepseek.com"
+
 def _add_fallback_model(params: Dict[str, Any], model_name: str, messages: List[Dict[str, Any]]) -> None:
     """Add fallback model to the parameters."""
     fallback_model = get_openrouter_fallback(model_name)
@@ -292,6 +312,7 @@ def prepare_params(
     # Add Kimi K2-specific parameters
     _configure_kimi_k2(params, model_name)
     _configure_thinking(params, model_name, enable_thinking, reasoning_effort)
+    _configure_deepseek(params, model_name)
 
     return params
 
@@ -316,7 +337,7 @@ async def make_llm_api_call(
 
     Args:
         messages: List of message dictionaries for the conversation
-        model_name: Name of the model to use (e.g., "gpt-4", "claude-3", "openrouter/openai/gpt-4", "bedrock/anthropic.claude-3-sonnet-20240229-v1:0")
+        model_name: Name of the model to use (e.g., "gpt-4", "claude-3", "deepseek/deepseek-chat", "openrouter/openai/gpt-4", "bedrock/anthropic.claude-3-sonnet-20240229-v1:0")
         response_format: Desired format for the response
         temperature: Sampling temperature (0-1)
         max_tokens: Maximum tokens in the response

@@ -30,6 +30,7 @@ import re
 from datetime import datetime, timezone, timedelta
 import aiofiles
 import yaml
+from utils.config import config
 
 # Type alias for tool choice
 ToolChoice = Literal["auto", "required", "none"]
@@ -278,7 +279,7 @@ class ThreadManager:
         system_prompt: Dict[str, Any],
         stream: bool = True,
         temporary_message: Optional[Dict[str, Any]] = None,
-        llm_model: str = "gpt-5",
+        llm_model: str = config.DEFAULT_MODEL,
         llm_temperature: float = 0,
         llm_max_tokens: Optional[int] = None,
         processor_config: Optional[ProcessorConfig] = None,

@@ -46,7 +46,7 @@ class AgentConfig:
     stream: bool
     native_max_auto_continues: int = 25
     max_iterations: int = 100
-    model_name: str = "openai/gpt-5-mini"
+    model_name: str = config.DEFAULT_MODEL
     enable_thinking: Optional[bool] = False
     reasoning_effort: Optional[str] = 'low'
     enable_context_manager: bool = True
@@ -57,10 +57,11 @@ class AgentConfig:
 
 
 class ToolManager:
-    def __init__(self, thread_manager: ThreadManager, project_id: str, thread_id: str):
+    def __init__(self, thread_manager: ThreadManager, project_id: str, thread_id: str, agent_config: Optional[dict] = None):
         self.thread_manager = thread_manager
         self.project_id = project_id
         self.thread_id = thread_id
+        self.agent_config = agent_config
     
     def register_all_tools(self, agent_id: Optional[str] = None, disabled_tools: Optional[List[str]] = None):
         """Register all available tools by default, with optional exclusions.
@@ -115,12 +116,47 @@ class ToolManager:
         
         for tool_name, tool_class, kwargs in sandbox_tools:
             if tool_name not in disabled_tools:
+                # 检查工具是否在配置中启用
+                if self.agent_config and 'agentpress_tools' in self.agent_config:
+                    tool_config = self.agent_config['agentpress_tools'].get(tool_name)
+                    if isinstance(tool_config, dict):
+                        if not tool_config.get('enabled', True):
+                            logger.debug(f"Skipping {tool_name} - disabled in config")
+                            continue
+                    elif isinstance(tool_config, bool) and not tool_config:
+                        logger.debug(f"Skipping {tool_name} - disabled in config")
+                        continue
+                
+                # 添加配置检查
+                if tool_name == 'web_search_tool' and not config.TAVILY_API_KEY:
+                    logger.warning("Skipping web_search_tool - TAVILY_API_KEY not configured")
+                    continue
+                if tool_name == 'sb_vision_tool' and not config.FIRECRAWL_API_KEY:
+                    logger.warning("Skipping sb_vision_tool - FIRECRAWL_API_KEY not configured")
+                    continue
+                
                 self.thread_manager.add_tool(tool_class, **kwargs)
                 logger.debug(f"Registered {tool_name}")
     
     def _register_utility_tools(self, disabled_tools: List[str]):
         """Register utility and data provider tools."""
-        if config.RAPID_API_KEY and 'data_providers_tool' not in disabled_tools:
+        if 'data_providers_tool' not in disabled_tools:
+            # 检查工具是否在配置中启用
+            if self.agent_config and 'agentpress_tools' in self.agent_config:
+                tool_config = self.agent_config['agentpress_tools'].get('data_providers_tool')
+                if isinstance(tool_config, dict):
+                    if not tool_config.get('enabled', True):
+                        logger.debug(f"Skipping data_providers_tool - disabled in config")
+                        return
+                elif isinstance(tool_config, bool) and not tool_config:
+                    logger.debug(f"Skipping data_providers_tool - disabled in config")
+                    return
+            
+            # 检查API key配置
+            if not config.RAPID_API_KEY:
+                logger.warning("Skipping data_providers_tool - RAPID_API_KEY not configured")
+                return
+                
             self.thread_manager.add_tool(DataProvidersTool)
             logger.debug("Registered data_providers_tool")
     
@@ -151,6 +187,17 @@ class ToolManager:
     def _register_browser_tool(self, disabled_tools: List[str]):
         """Register browser tool."""
         if 'browser_tool' not in disabled_tools:
+            # 检查工具是否在配置中启用
+            if self.agent_config and 'agentpress_tools' in self.agent_config:
+                tool_config = self.agent_config['agentpress_tools'].get('browser_tool')
+                if isinstance(tool_config, dict):
+                    if not tool_config.get('enabled', True):
+                        logger.debug(f"Skipping browser_tool - disabled in config")
+                        return
+                elif isinstance(tool_config, bool) and not tool_config:
+                    logger.debug(f"Skipping browser_tool - disabled in config")
+                    return
+            
             from agent.tools.browser_tool import BrowserTool
             self.thread_manager.add_tool(BrowserTool, project_id=self.project_id, thread_id=self.thread_id, thread_manager=self.thread_manager)
             logger.debug("Registered browser_tool")
@@ -467,7 +514,7 @@ class AgentRunner:
             logger.debug(f"No sandbox found for project {self.config.project_id}; will create lazily when needed")
     
     async def setup_tools(self):
-        tool_manager = ToolManager(self.thread_manager, self.config.project_id, self.config.thread_id)
+        tool_manager = ToolManager(self.thread_manager, self.config.project_id, self.config.thread_id, self.config.agent_config)
         
         # Determine agent ID for agent builder tools
         agent_id = None
@@ -738,7 +785,7 @@ async def run_agent(
     thread_manager: Optional[ThreadManager] = None,
     native_max_auto_continues: int = 25,
     max_iterations: int = 100,
-    model_name: str = "openai/gpt-5-mini",
+    model_name: str = config.DEFAULT_MODEL,
     enable_thinking: Optional[bool] = False,
     reasoning_effort: Optional[str] = 'low',
     enable_context_manager: bool = True,
@@ -748,15 +795,15 @@ async def run_agent(
     target_agent_id: Optional[str] = None
 ):
     effective_model = model_name
-    if model_name == "openai/gpt-5-mini" and agent_config and agent_config.get('model'):
+    if model_name == config.DEFAULT_MODEL and agent_config and agent_config.get('model'):
         effective_model = agent_config['model']
         logger.debug(f"Using model from agent config: {effective_model} (no user selection)")
-    elif model_name != "openai/gpt-5-mini":
+    elif model_name != config.DEFAULT_MODEL:
         logger.debug(f"Using user-selected model: {effective_model}")
     else:
         logger.debug(f"Using default model: {effective_model}")
     
-    config = AgentConfig(
+    agent_config_obj = AgentConfig(
         thread_id=thread_id,
         project_id=project_id,
         stream=stream,
@@ -772,6 +819,6 @@ async def run_agent(
         target_agent_id=target_agent_id
     )
     
-    runner = AgentRunner(config)
+    runner = AgentRunner(agent_config_obj)
     async for chunk in runner.run():
         yield chunk

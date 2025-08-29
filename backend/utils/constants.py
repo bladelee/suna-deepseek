@@ -11,14 +11,24 @@ MODELS = {
         "context_window": 200_000,  # 200k tokens
         "tier_availability": ["paid"]
     },
-    # "openrouter/deepseek/deepseek-chat": {
-    #     "aliases": ["deepseek"],
-    #     "pricing": {
-    #         "input_cost_per_million_tokens": 0.38,
-    #         "output_cost_per_million_tokens": 0.89
-    #     },
-    #     "tier_availability": ["free", "paid"]
-    # },
+    "deepseek/deepseek-chat": {
+        "aliases": ["deepseek-chat", "deepseek"],
+        "pricing": {
+            "input_cost_per_million_tokens": 0.38,
+            "output_cost_per_million_tokens": 0.89
+        },
+        "context_window": 128_000,  # 128k tokens
+        "tier_availability": ["free", "paid"]
+    },
+    "openrouter/deepseek/deepseek-chat": {
+        "aliases": ["openrouter/deepseek-chat"],
+        "pricing": {
+            "input_cost_per_million_tokens": 0.38,
+            "output_cost_per_million_tokens": 0.89
+        },
+        "context_window": 128_000,  # 128k tokens
+        "tier_availability": ["free", "paid"]
+    },
     # "openrouter/qwen/qwen3-235b-a22b": {
     #     "aliases": ["qwen3"],
     #     "pricing": {
@@ -35,14 +45,15 @@ MODELS = {
     #     },
     #     "tier_availability": ["free", "paid"]
     # },
-    # "openrouter/deepseek/deepseek-chat-v3-0324": {
-    #     "aliases": ["deepseek/deepseek-chat-v3-0324"],
-    #     "pricing": {
-    #         "input_cost_per_million_tokens": 0.38,
-    #         "output_cost_per_million_tokens": 0.89
-    #     },
-    #     "tier_availability": ["free", "paid"]
-    # },
+    "openrouter/deepseek/deepseek-chat-v3-0324": {
+        "aliases": ["deepseek/deepseek-chat-v3-0324"],
+        "pricing": {
+            "input_cost_per_million_tokens": 0.38,
+            "output_cost_per_million_tokens": 0.89
+        },
+        "context_window": 128_000,  # 128k tokens
+        "tier_availability": ["free", "paid"]
+    },
     "openrouter/moonshotai/kimi-k2": {
         "aliases": ["moonshotai/kimi-k2"],
         "pricing": {

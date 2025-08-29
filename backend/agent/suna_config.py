@@ -1,4 +1,5 @@
 from agent.prompt import SYSTEM_PROMPT
+from utils.config import config
 
 # Suna default configuration - simplified and centralized
 SUNA_CONFIG = {
@@ -6,7 +7,7 @@ SUNA_CONFIG = {
     "description": "Suna is your AI assistant with access to various tools and integrations to help you with tasks across domains.",
     "avatar": "🌞",
     "avatar_color": "#F59E0B",
-    "model": "openai/gpt-5-mini",
+    "model": config.DEFAULT_MODEL,
     "system_prompt": SYSTEM_PROMPT,
     "configured_mcps": [],
     "custom_mcps": [],
@@ -15,7 +16,7 @@ SUNA_CONFIG = {
         "sb_files_tool": True,
         "sb_deploy_tool": True,
         "sb_expose_tool": True,
-        "web_search_tool": True,
+        "web_search_tool": False,
         "sb_vision_tool": True,
         "sb_image_edit_tool": True,
         "sb_presentation_outline_tool": False,

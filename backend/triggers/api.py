@@ -786,7 +786,7 @@ async def execute_agent_workflow(
     if active_version and active_version.model:
         model_name = active_version.model
     else:
-        model_name = "openai/gpt-5-mini"
+        model_name = config.DEFAULT_MODEL
     
     can_use, model_message, allowed_models = await can_use_model(client, account_id, model_name)
     if not can_use:

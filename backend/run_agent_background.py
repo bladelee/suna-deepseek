@@ -10,6 +10,7 @@ from typing import Optional
 from services import redis
 from agent.run import run_agent
 from utils.logger import logger, structlog
+from utils.config import config
 import dramatiq
 import uuid
 from agentpress.thread_manager import ThreadManager
@@ -116,7 +117,7 @@ async def run_agent_background(
     })
     
     effective_model = model_name
-    if model_name == "openai/gpt-5-mini" and agent_config and agent_config.get('model'):
+    if model_name == config.DEFAULT_MODEL and agent_config and agent_config.get('model'):
         agent_model = agent_config['model']
         from utils.constants import MODEL_NAME_ALIASES
         resolved_agent_model = MODEL_NAME_ALIASES.get(agent_model, agent_model)
@@ -125,7 +126,7 @@ async def run_agent_background(
     else:
         from utils.constants import MODEL_NAME_ALIASES
         effective_model = MODEL_NAME_ALIASES.get(model_name, model_name)
-        if model_name != "openai/gpt-5-mini":
+        if model_name != config.DEFAULT_MODEL:
             logger.debug(f"Using user-selected model: {model_name} -> {effective_model}")
         else:
             logger.debug(f"Using default model: {effective_model}")

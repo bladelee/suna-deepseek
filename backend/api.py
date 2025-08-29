@@ -197,6 +197,16 @@ async def health_check():
     return {
         "status": "ok", 
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "instance_id": instance_id,
+        "environment": config.ENV_MODE.value
+    }
+
+@api_router.get("/config")
+async def get_config():
+    logger.debug("Config endpoint called")
+    return {
+        "default_model": config.DEFAULT_MODEL,
+        "environment": config.ENV_MODE.value,
         "instance_id": instance_id
     }
 

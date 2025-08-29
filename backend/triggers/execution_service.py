@@ -360,7 +360,7 @@ class AgentExecutor:
         trigger_variables: Dict[str, Any]
     ) -> str:
         client = await self._db.client
-        model_name = agent_config.get('model') or "openai/gpt-5-mini"
+        model_name = agent_config.get('model') or config.DEFAULT_MODEL
         
         account_id = agent_config.get('account_id')
         if not account_id:
@@ -591,7 +591,7 @@ class WorkflowExecutor:
         from services.billing import check_billing_status, can_use_model
         
         client = await self._db.client
-        model_name = "openai/gpt-5-mini"
+        model_name = config.DEFAULT_MODEL
         
         can_use, model_message, _ = await can_use_model(client, account_id, model_name)
         if not can_use:
@@ -638,7 +638,7 @@ class WorkflowExecutor:
         agent_config: Dict[str, Any]
     ) -> str:
         client = await self._db.client
-        model_name = agent_config.get('model') or "openai/gpt-5-mini"
+        model_name = agent_config.get('model') or config.DEFAULT_MODEL
         
         account_id = agent_config.get('account_id')
         if not account_id:
@@ -680,7 +680,7 @@ class WorkflowExecutor:
         run_agent_background.send(
             agent_run_id=agent_run_id,
             thread_id=thread_id,
-            instance_id=getattr(config, 'INSTANCE_ID', 'default'),
+            instance_id="workflow_executor",
             project_id=project_id,
             model_name=model_name,
             enable_thinking=False,
@@ -698,7 +698,7 @@ class WorkflowExecutor:
     
     async def _register_workflow_run(self, agent_run_id: str) -> None:
         try:
-            instance_id = getattr(config, 'INSTANCE_ID', 'default')
+            instance_id = "workflow_executor"
             instance_key = f"active_run:{instance_id}:{agent_run_id}"
             await redis.set(instance_key, "running", ex=redis.REDIS_KEY_TTL)
         except Exception as e:
