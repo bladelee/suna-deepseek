@@ -1,183 +1,238 @@
-# Supabase CLI
+<div align="center">
 
-[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
-](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
+# Kortix – Open Source Platform to Build, Manage and Train AI Agents
 
-[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
+![Kortix Screenshot](frontend/public/banner.png)
 
-This repository contains all the functionality for Supabase CLI.
+**The complete platform for creating autonomous AI agents that work for you**
 
-- [x] Running Supabase locally
-- [x] Managing database migrations
-- [x] Creating and deploying Supabase Functions
-- [x] Generating types directly from your database schema
-- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
+Kortix is a comprehensive open source platform that empowers you to build, manage, and train sophisticated AI agents for any use case. Create powerful agents that act autonomously on your behalf, from general-purpose assistants to specialized automation tools.
 
-## Getting started
+[![License](https://img.shields.io/badge/License-Apache--2.0-blue)](./license)
+[![Discord Follow](https://dcbadge.limes.pink/api/server/Py6pCBUUPw?style=flat)](https://discord.gg/Py6pCBUUPw)
+[![Twitter Follow](https://img.shields.io/twitter/follow/kortixai)](https://x.com/kortixai)
+[![GitHub Repo stars](https://img.shields.io/github/stars/kortix-ai/suna)](https://github.com/kortix-ai/suna)
+[![Issues](https://img.shields.io/github/issues/kortix-ai/suna)](https://github.com/kortix-ai/suna/labels/bug)
 
-### Install the CLI
+<!-- Keep these links. Translations will automatically update with the README. -->
+[Deutsch](https://www.readme-i18n.com/kortix-ai/suna?lang=de) | 
+[Español](https://www.readme-i18n.com/kortix-ai/suna?lang=es) | 
+[français](https://www.readme-i18n.com/kortix-ai/suna?lang=fr) | 
+[日本語](https://www.readme-i18n.com/kortix-ai/suna?lang=ja) | 
+[한국어](https://www.readme-i18n.com/kortix-ai/suna?lang=ko) | 
+[Português](https://www.readme-i18n.com/kortix-ai/suna?lang=pt) | 
+[Русский](https://www.readme-i18n.com/kortix-ai/suna?lang=ru) | 
+[中文](./README_CN.md)
 
-Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
+</div>
 
+## 🌟 What Makes Kortix Special
+
+### 🤖 Includes Suna – Flagship Generalist AI Worker
+Meet Suna, our showcase agent that demonstrates the full power of the Kortix platform. Through natural conversation, Suna handles research, data analysis, browser automation, file management, and complex workflows – showing you what's possible when you build with Kortix.
+
+### 🔧 Build Custom Suna-Type Agents
+Create your own specialized agents tailored to specific domains, workflows, or business needs. Whether you need agents for customer service, data processing, content creation, or industry-specific tasks, Kortix provides the infrastructure and tools to build, deploy, and scale them.
+
+### 🚀 Complete Platform Capabilities
+- **Browser Automation**: Navigate websites, extract data, fill forms, automate web workflows
+- **File Management**: Create, edit, and organize documents, spreadsheets, presentations, code
+- **Web Intelligence**: Crawling, search capabilities, data extraction and synthesis
+- **System Operations**: Command-line execution, system administration, DevOps tasks
+- **API Integrations**: Connect with external services and automate cross-platform workflows
+- **Agent Builder**: Visual tools to configure, customize, and deploy agents
+
+### 🆕 Latest Features
+- **🤖 DeepSeek Support**: Full integration with DeepSeek AI models for enhanced performance and cost-effectiveness
+- **🐳 Local Docker Deployment**: Run the entire platform locally using Docker containers for development and testing
+- **🏠 Local Supabase Setup**: Deploy Supabase locally for complete offline development and testing capabilities
+
+## 📋 Table of Contents
+
+- [🌟 What Makes Kortix Special](#-what-makes-kortix-special)
+- [🎯 Agent Examples & Use Cases](#-agent-examples--use-cases)
+- [🏗️ Platform Architecture](#️-platform-architecture)
+- [🚀 Quick Start](#-quick-start)
+- [🏠 Self-Hosting](#-self-hosting)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+
+## 🎯 Agent Examples & Use Cases
+
+### Suna - Your Generalist AI Worker
+
+Suna demonstrates the full capabilities of the Kortix platform as a versatile AI worker that can:
+
+**🔍 Research & Analysis**
+- Conduct comprehensive web research across multiple sources
+- Analyze documents, reports, and datasets
+- Synthesize information and create detailed summaries
+- Market research and competitive intelligence
+
+**🌐 Browser Automation**
+- Navigate complex websites and web applications
+- Extract data from multiple pages automatically
+- Fill forms and submit information
+- Automate repetitive web-based workflows
+
+**📁 File & Document Management**
+- Create and edit documents, spreadsheets, presentations
+- Organize and structure file systems
+- Convert between different file formats
+- Generate reports and documentation
+
+**📊 Data Processing & Analysis**
+- Clean and transform datasets from various sources
+- Perform statistical analysis and create visualizations
+- Monitor KPIs and generate insights
+- Integrate data from multiple APIs and databases
+
+**⚙️ System Administration**
+- Execute command-line operations safely
+- Manage system configurations and deployments
+- Automate DevOps workflows
+- Monitor system health and performance
+
+### Build Your Own Specialized Agents
+
+The Kortix platform enables you to create agents tailored to specific needs:
+
+**🎧 Customer Service Agents**
+- Handle support tickets and FAQ responses
+- Manage user onboarding and training
+- Escalate complex issues to human agents
+- Track customer satisfaction and feedback
+
+**✍️ Content Creation Agents**
+- Generate marketing copy and social media posts
+- Create technical documentation and tutorials
+- Develop educational content and training materials
+- Maintain content calendars and publishing schedules
+
+**📈 Sales & Marketing Agents**
+- Qualify leads and manage CRM systems
+- Schedule meetings and follow up with prospects
+- Create personalized outreach campaigns
+- Generate sales reports and forecasts
+
+**🔬 Research & Development Agents**
+- Conduct academic and scientific research
+- Monitor industry trends and innovations
+- Analyze patents and competitive landscapes
+- Generate research reports and recommendations
+
+**🏭 Industry-Specific Agents**
+- Healthcare: Patient data analysis, appointment scheduling
+- Finance: Risk assessment, compliance monitoring
+- Legal: Document review, case research
+- Education: Curriculum development, student assessment
+
+Each agent can be configured with custom tools, workflows, knowledge bases, and integrations specific to your requirements.
+
+## 🏗️ Platform Architecture
+
+![Architecture Diagram](docs/images/diagram.png)
+
+Kortix consists of four main components that work together to provide a complete AI agent development platform:
+
+### 🔧 Backend API
+Python/FastAPI service that powers the agent platform with REST endpoints, thread management, agent orchestration, and LLM integration with Anthropic, OpenAI, and others via LiteLLM. Includes agent builder tools, workflow management, and extensible tool system.
+
+### 🖥️ Frontend Dashboard
+Next.js/React application providing a comprehensive agent management interface with chat interfaces, agent configuration dashboards, workflow builders, monitoring tools, and deployment controls.
+
+### 🐳 Agent Runtime
+Isolated Docker execution environments for each agent instance featuring browser automation, code interpreter, file system access, tool integration, security sandboxing, and scalable agent deployment.
+
+### 🗄️ Database & Storage
+Supabase-powered data layer handling authentication, user management, agent configurations, conversation history, file storage, workflow state, analytics, and real-time subscriptions for live agent monitoring.
+
+## 🚀 Quick Start
+
+Get your Kortix platform running in minutes with our automated setup wizard:
+
+### 1️⃣ Clone the Repository
 ```bash
-npm i supabase --save-dev
+git clone https://github.com/kortix-ai/suna.git
+cd suna
 ```
 
-To install the beta release channel:
-
+### 2️⃣ Run the Setup Wizard
 ```bash
-npm i supabase@beta --save-dev
+python setup.py
 ```
+The wizard will guide you through 14 steps with progress saving, so you can resume if interrupted.
 
-When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
-
-```
-NODE_OPTIONS=--no-experimental-fetch yarn add supabase
-```
-
-> **Note**
-For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
-
-<details>
-  <summary><b>macOS</b></summary>
-
-  Available via [Homebrew](https://brew.sh). To install:
-
-  ```sh
-  brew install supabase/tap/supabase
-  ```
-
-  To install the beta release channel:
-  
-  ```sh
-  brew install supabase/tap/supabase-beta
-  brew link --overwrite supabase-beta
-  ```
-  
-  To upgrade:
-
-  ```sh
-  brew upgrade supabase
-  ```
-</details>
-
-<details>
-  <summary><b>Windows</b></summary>
-
-  Available via [Scoop](https://scoop.sh). To install:
-
-  ```powershell
-  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
-  scoop install supabase
-  ```
-
-  To upgrade:
-
-  ```powershell
-  scoop update supabase
-  ```
-</details>
-
-<details>
-  <summary><b>Linux</b></summary>
-
-  Available via [Homebrew](https://brew.sh) and Linux packages.
-
-  #### via Homebrew
-
-  To install:
-
-  ```sh
-  brew install supabase/tap/supabase
-  ```
-
-  To upgrade:
-
-  ```sh
-  brew upgrade supabase
-  ```
-
-  #### via Linux packages
-
-  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
-
-  ```sh
-  sudo apk add --allow-untrusted <...>.apk
-  ```
-
-  ```sh
-  sudo dpkg -i <...>.deb
-  ```
-
-  ```sh
-  sudo rpm -i <...>.rpm
-  ```
-
-  ```sh
-  sudo pacman -U <...>.pkg.tar.zst
-  ```
-</details>
-
-<details>
-  <summary><b>Other Platforms</b></summary>
-
-  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
-
-  ```sh
-  go install github.com/supabase/cli@latest
-  ```
-
-  Add a symlink to the binary in `$PATH` for easier access:
-
-  ```sh
-  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
-  ```
-
-  This works on other non-standard Linux distros.
-</details>
-
-<details>
-  <summary><b>Community Maintained Packages</b></summary>
-
-  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
-  To install in your working directory:
-
-  ```bash
-  pkgx install supabase
-  ```
-
-  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
-</details>
-
-### Run the CLI
-
+### 3️⃣ Start the Platform
 ```bash
-supabase bootstrap
+python start.py
 ```
 
-Or using npx:
+That's it! Your Kortix platform will be running with Suna ready to assist you.
 
+## 🏠 Self-Hosting
+
+Kortix can be self-hosted on your own infrastructure using our comprehensive setup wizard, giving you complete control over your AI agent platform. For a complete guide to self-hosting Kortix, please refer to our [Self-Hosting Guide](./docs/SELF-HOSTING.md).
+
+### 🔧 Setup Process Includes
+
+- **🏗️ Infrastructure**: Supabase project setup for database and authentication
+- **⚡ Performance**: Redis configuration for caching and session management
+- **🛡️ Security**: Daytona setup for secure agent execution environments
+- **🤖 AI Integration**: LLM providers (Anthropic, OpenAI, OpenRouter, DeepSeek, etc.)
+- **🌐 Web Capabilities**: Search and scraping (Tavily, Firecrawl)
+- **📋 Workflows**: QStash for background job processing
+- **🔗 Automation**: Webhook handling for automated tasks
+- **📊 Data Sources**: Optional RapidAPI integrations
+
+### 🐳 Local Docker Deployment
+Run the entire Kortix platform locally using Docker containers:
 ```bash
-npx supabase bootstrap
+# Clone and setup
+git clone https://github.com/kortix-ai/suna.git
+cd suna
+
+# Start with Docker Compose
+docker-compose up -d
 ```
 
-The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
+### 🏠 Local Supabase Setup
+Deploy Supabase locally for complete offline development:
+```bash
+# Start local Supabase
+docker-compose -f docker-compose.supabase.yml up -d
 
-## Docs
-
-Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
-
-## Breaking changes
-
-We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
-
-However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
-
-## Developing
-
-To run from source:
-
-```sh
-# Go >= 1.22
-go run . help
+# Access local Supabase Studio
+# http://localhost:54323
 ```
+
+### 📚 Manual Setup
+
+For advanced users who prefer manual configuration, see the [Self-Hosting Guide](./docs/SELF-HOSTING.md) for detailed manual setup instructions.
+
+The wizard will guide you through all necessary steps to get your Kortix platform up and running. For detailed instructions, troubleshooting tips, and advanced configuration options, see the [Self-Hosting Guide](./docs/SELF-HOSTING.md).
+
+## 🤝 Contributing
+
+We welcome contributions from the community! Whether you're fixing bugs, adding features, or improving documentation, your help makes Kortix better for everyone.
+
+Please see our [Contributing Guide](./CONTRIBUTING.md) for more details on:
+- How to set up your development environment
+- Code style and standards
+- Pull request process
+- Community guidelines
+
+## 📄 License
+
+Kortix is licensed under the Apache License, Version 2.0. See [LICENSE](./LICENSE) for the full license text.
+
+---
+
+<div align="center">
+
+**Ready to build your first AI agent?** 
+
+[Get Started](./docs/SELF-HOSTING.md) • [Join Discord](https://discord.gg/Py6pCBUUPw) • [Follow on Twitter](https://x.com/kortixai)
+
+</div>
+
