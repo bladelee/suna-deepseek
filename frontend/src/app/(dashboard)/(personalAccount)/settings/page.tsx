@@ -1,11 +1,19 @@
-import EditPersonalAccountName from '@/components/basejump/edit-personal-account-name';
-import { createClient } from '@/lib/supabase/server';
+'use client';
 
-export default async function PersonalAccountSettingsPage() {
-  const supabaseClient = await createClient();
-  const { data: personalAccount } = await supabaseClient.rpc(
-    'get_personal_account',
-  );
+import EditPersonalAccountName from '@/components/basejump/edit-personal-account-name';
+import { useEffect, useState } from 'react';
+
+export default function PersonalAccountSettingsPage() {
+  const [personalAccount, setPersonalAccount] = useState<any>(null);
+
+  useEffect(() => {
+    // Mock data for static export
+    setPersonalAccount({ account_id: 'mock-account-id', name: 'Personal Account' });
+  }, []);
+
+  if (!personalAccount) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div>

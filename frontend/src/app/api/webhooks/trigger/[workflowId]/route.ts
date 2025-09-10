@@ -1,3 +1,10 @@
+export const dynamic = "force-static";
+export const revalidate = 60;
+
+export function generateStaticParams() {
+  return [{ workflowId: 'test' }];
+}
+
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(

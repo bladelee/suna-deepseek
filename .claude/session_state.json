@@ -1,0 +1,28 @@
+{
+  "last_session": {
+    "timestamp": "2025-09-08T19:17:02.017167",
+    "todos": [
+      "Manual todo tracking - use git commits for better persistence"
+    ],
+    "current_file": null,
+    "progress_notes": ""
+  },
+  "session_history": [
+    {
+      "timestamp": "2025-09-08T14:39:09.072543",
+      "todos": [
+        "Manual todo tracking - use git commits for better persistence"
+      ],
+      "current_file": null,
+      "progress_notes": "\u5df2\u521b\u5efa\u81ea\u5b9a\u4e49\u72b6\u6001\u4fdd\u5b58\u811a\u672c"
+    },
+    {
+      "timestamp": "2025-09-08T19:17:02.017167",
+      "todos": [
+        "Manual todo tracking - use git commits for better persistence"
+      ],
+      "current_file": null,
+      "progress_notes": ""
+    }
+  ]
+}

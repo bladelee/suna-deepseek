@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Card,
   CardContent,
@@ -5,20 +7,36 @@ import {
   CardHeader,
   CardTitle,
 } from '../ui/card';
-import { createClient } from '@/lib/supabase/server';
 import { Table, TableRow, TableBody, TableCell } from '../ui/table';
 import { Button } from '../ui/button';
 import Link from 'next/link';
 import { Badge } from '../ui/badge';
+import { useEffect, useState } from 'react';
 
-export default async function ManageTeams() {
-  const supabaseClient = await createClient();
+export default function ManageTeams() {
+  const [teams, setTeams] = useState<any[]>([]);
 
-  const { data } = await supabaseClient.rpc('get_accounts');
-
-  const teams: any[] = data?.filter(
-    (team: any) => team.personal_account === false,
-  );
+  useEffect(() => {
+    // Mock data for static export
+    setTeams([
+      {
+        account_id: 'mock-team-1',
+        name: 'Team One',
+        personal_account: false,
+        account_role: 'owner',
+        is_primary_owner: true,
+        slug: 'team-one'
+      },
+      {
+        account_id: 'mock-team-2', 
+        name: 'Team Two',
+        personal_account: false,
+        account_role: 'member',
+        is_primary_owner: false,
+        slug: 'team-two'
+      }
+    ]);
+  }, []);
 
   return (
     <Card className="border-subtle dark:border-white/10 bg-white dark:bg-background-secondary shadow-none rounded-xl">

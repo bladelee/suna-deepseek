@@ -1,11 +1,8 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import { redirect, useParams } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
-import { backendApi } from '@/lib/api-client';
-import { MarketplaceTemplate } from '@/components/agents/installation/types';
-import { AgentTemplateLandingPage } from '@/components/agents/template-preview/agent-template-landing-page';
-import { Loader2 } from 'lucide-react';
+export function generateStaticParams() {
+  return [{ templateId: 'test' }];
+}
 
 export default function AgentPreviewPage() {
     redirect('/dashboard');

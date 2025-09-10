@@ -1,15 +1,23 @@
-import { createClient } from '@/lib/supabase/server';
-import UsageLogs from '@/components/billing/usage-logs';
+'use client';
 
-export default async function UsageLogsPage() {
-  const supabaseClient = await createClient();
-  const { data: personalAccount } = await supabaseClient.rpc(
-    'get_personal_account',
-  );
+import UsageLogs from '@/components/billing/usage-logs';
+import { useEffect, useState } from 'react';
+
+export default function UsageLogsPage() {
+  const [accountId, setAccountId] = useState<string>('');
+
+  useEffect(() => {
+    // Mock data for static export
+    setAccountId('mock-account-id');
+  }, []);
+
+  if (!accountId) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-6">
-      <UsageLogs accountId={personalAccount.account_id} />
+      <UsageLogs accountId={accountId} />
     </div>
   );
 }

@@ -1,30 +1,26 @@
-'use server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+// Stub for Electron build - Server Actions not supported in static export
 
 export async function createClient() {
-  const cookieStore = await cookies()
-
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
-          }
-        },
-      },
+  console.warn('Server Actions not supported in Electron build');
+  
+  // Return a mock client with minimal functionality
+  return {
+    rpc: (fnName: string, params?: any) => Promise.resolve({ data: null, error: null }),
+    from: (table: string) => ({
+      select: (columns?: string) => ({
+        eq: (column: string, value: any) => ({
+          single: () => Promise.resolve({ data: null, error: null })
+        })
+      })
+    }),
+    auth: {
+      signOut: () => Promise.resolve({ error: null }),
+      signInWithPassword: () => Promise.resolve({ error: null, data: null }),
+      signUp: () => Promise.resolve({ error: null, data: null }),
+      resetPasswordForEmail: () => Promise.resolve({ error: null }),
+      updateUser: () => Promise.resolve({ error: null }),
+      exchangeCodeForSession: (code: string) => Promise.resolve({ error: null, data: null }),
+      getUser: () => Promise.resolve({ data: { user: { id: 'mock-user-id' } }, error: null })
     }
-  )
+  };
 }

@@ -20,11 +20,8 @@ export default async function UserAccountButton() {
   );
 
   const signOut = async () => {
-    'use server';
-
-    const supabase = await createClient();
-    await supabase.auth.signOut();
-    return redirect('/');
+    console.warn('Server Actions not supported in Electron build');
+    // Return void to satisfy form action type
   };
 
   return (

@@ -3,38 +3,22 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
-import '@/lib/polyfills'; // Import polyfill for Promise.withResolvers
-import { Document, Page, pdfjs } from 'react-pdf';
 
-// Import styles for annotations and text layer
-import 'react-pdf/dist/Page/AnnotationLayer.css';
-import 'react-pdf/dist/Page/TextLayer.css';
-
-// Internal component that uses react-pdf
+// Simple iframe-based PDF viewer for Electron compatibility
 interface PdfDocumentProps {
     url: string;
     containerWidth: number | null;
 }
 
 const PdfDocument = ({ url, containerWidth }: PdfDocumentProps) => {
-    // Configure PDF.js worker
-    React.useEffect(() => {
-        pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-            'pdfjs-dist/build/pdf.worker.min.mjs',
-            import.meta.url,
-        ).toString();
-    }, [pdfjs]);
-
     return (
-        <Document file={url} className="shadow-none">
-            <Page
-                pageNumber={1}
-                width={containerWidth ?? undefined}
-                renderTextLayer={true}
-                renderAnnotationLayer={true}
-                className="border border-border rounded bg-white"
-            />
-        </Document>
+        <iframe
+            src={url}
+            width={containerWidth ?? '100%'}
+            height="600"
+            className="border border-border rounded bg-white"
+            style={{ minHeight: '400px' }}
+        />
     );
 };
 
