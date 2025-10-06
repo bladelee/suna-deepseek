@@ -10,7 +10,10 @@ import {
   SelectLabel,
   SelectItem,
 } from '@/components/ui/select';
-import { createInvitation } from '@/lib/actions/invitations';
+import { createInvitationFn } from '@/lib/actions-import';
+
+// 为了保持代码一致性，重命名为createInvitation
+const createInvitation = createInvitationFn;
 import { useFormState } from 'react-dom';
 import fullInvitationUrl from '@/lib/full-invitation-url';
 
@@ -74,9 +77,7 @@ export default function NewInvitationForm({ accountId }: Props) {
             </Select>
           </div>
           <SubmitButton
-            formAction={async (prevState: any, formData: FormData) =>
-              formAction(formData)
-            }
+            formAction={createInvitation}
             errorMessage={state?.message}
             pendingText="Creating..."
           >

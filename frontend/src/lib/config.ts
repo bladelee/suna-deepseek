@@ -5,6 +5,14 @@ export enum EnvMode {
   PRODUCTION = 'production',
 }
 
+// Environment detection functions
+export const isElectron = (): boolean => {
+  // 检查window.electronAPI是否存在（通过preload.js暴露）
+  return typeof window !== 'undefined' && typeof window.electronAPI !== 'undefined';
+};
+
+export const isWeb = (): boolean => !isElectron();
+
 // Subscription tier structure
 export interface SubscriptionTierData {
   priceId: string;

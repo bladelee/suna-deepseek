@@ -6,6 +6,11 @@ export async function middleware(request: NextRequest) {
     request,
   })
 
+  // 添加日志来检查环境变量值
+  console.log('SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+  console.log('SUPABASE_ANON_KEY:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  console.log('Is anon key default?', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY === 'your-anon-key')
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -82,4 +87,4 @@ export const config = {
      */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
-} 
+}

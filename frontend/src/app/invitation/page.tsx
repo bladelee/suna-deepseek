@@ -1,28 +1,27 @@
 'use client';
 
-import React, { Suspense } from 'react';
+import React from 'react';
 import AcceptTeamInvitation from '@/components/basejump/accept-team-invitation';
-import { redirect, useSearchParams } from 'next/navigation';
+import { redirect } from 'next/navigation';
 
-function InvitationContent() {
-  const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+type InvitationSearchParams = {
+  token?: string;
+};
 
-  if (!token) {
+export default function AcceptInvitationPage({
+  searchParams,
+}: {
+  searchParams: Promise<InvitationSearchParams>;
+}) {
+  const unwrappedSearchParams = React.use(searchParams);
+
+  if (!unwrappedSearchParams.token) {
     redirect('/');
   }
 
   return (
     <div className="max-w-md mx-auto w-full my-12">
-      <AcceptTeamInvitation token={token} />
+      <AcceptTeamInvitation token={unwrappedSearchParams.token} />
     </div>
-  );
-}
-
-export default function AcceptInvitationPage() {
-  return (
-    <Suspense fallback={<div className="max-w-md mx-auto w-full my-12">Loading invitation...</div>}>
-      <InvitationContent />
-    </Suspense>
   );
 }
