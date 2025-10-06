@@ -1,0 +1,53 @@
+_format_version: "2.1"
+services:
+  - name: rest
+    url: http://rest:3000
+    routes:
+      - name: rest-route
+        paths: ["/rest/v1"]
+        strip_path: true
+
+  - name: auth
+    url: http://auth:9999
+    routes:
+      - name: auth-route
+        paths: ["/auth/v1"]
+        strip_path: true
+
+  - name: pg-meta
+    url: http://pg-meta:8080
+    routes:
+      - name: pg-meta-route
+        paths: ["/pg-meta/v1"]
+        strip_path: true
+      - name: pg-meta-platform-route
+        paths: ["/api/platform/pg-meta"]
+        strip_path: false
+        plugins:
+          - name: request-transformer
+            config:
+              replace:
+                uri: "/query"
+
+  - name: mock-api-keys
+    url: http://localhost:8000
+    routes:
+      - name: mock-api-keys-route
+        paths: ["/api/v1/projects/default/api-keys"]
+        strip_path: false
+        plugins:
+          - name: request-termination
+            config:
+              status_code: 200
+              content_type: "application/json"
+              body: '{"name":"anon","secret":"test_anon_key","type":"anon","created_at":"2025-09-29T00:00:00Z"}'
+
+plugins:
+  - name: cors
+    config:
+      origins: ["*"]
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]
+      headers: ["Accept", "accept-profile","Authorization", "Content-Type", "X-CSRF-Token", "content-profile", "x-client-info", "apikey", "referer", "sec-ch-ua", "sec-ch-ua-mobile", "sec-ch-ua-platform", "user-agent", "x-supabase-api-version"]
+      exposed_headers: ["Content-Length", "X-Kong-Response-Latency", "Content-Type"]
+      credentials: true
+      max_age: 86400

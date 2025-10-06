@@ -15,7 +15,9 @@ Kortix是一个全面的开源平台，让您能够构建、管理和训练复�
 [![Issues](https://img.shields.io/github/issues/kortix-ai/suna)](https://github.com/kortix-ai/suna/labels/bug)
 
 <!-- 语言选择链接 -->
+
 [English](./README.md) | 
+[简体中文](./README_CN.md) | 
 [Deutsch](https://www.readme-i18n.com/kortix-ai/suna?lang=de) | 
 [Español](https://www.readme-i18n.com/kortix-ai/suna?lang=es) | 
 [français](https://www.readme-i18n.com/kortix-ai/suna?lang=fr) | 
@@ -25,6 +27,19 @@ Kortix是一个全面的开源平台，让您能够构建、管理和训练复�
 [Русский](https://www.readme-i18n.com/kortix-ai/suna?lang=ru)
 
 </div>
+
+## 🌟 云端linux服务器部署步骤，使用本机docker容器作为运行时
+
+前置条件： 安装python3，node 22，docker compose，supabase cli
+步骤：
+     1. 配置环境变量 env.example为 .env, 以及 kong.yml
+     2. 用docker compose 部署本地supabase. 
+          docker compose -f docker-compose-supabase-official up -d
+     3. 运行 run_role_fix.sh, supabase 角色和权限修复脚本,建立 supabase的角色和授权等  
+     4. 运行 local_setup.py 创建环境变量并推送数据库，检查 frontend/env.local 和 backend/.env 的配置是否正确，可修改为远端daytona的默认地址
+     5. 运行 docker compose 部署启动应用  
+          docker compose -f docker-compose.yaml up
+         
 
 ## 🌟 Kortix 的独特之处
 
