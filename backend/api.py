@@ -145,6 +145,9 @@ if config.ENV_MODE == EnvMode.STAGING:
     allowed_origins.append("http://localhost:3002")    
     allow_origin_regex = r"https://suna-.*-prjcts\.vercel\.app"
 
+# Add IP address for current deployment
+allowed_origins.append("http://43.142.57.20:3002")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
