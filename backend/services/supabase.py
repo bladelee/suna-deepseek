@@ -46,6 +46,9 @@ class DBConnection:
                 raise RuntimeError("SUPABASE_URL and a key (SERVICE_ROLE_KEY or ANON_KEY) environment variables must be set.")
 
             logger.debug("Initializing Supabase connection")
+            logger.debug(f"Supabase URL: {supabase_url}")
+            logger.debug(f"Supabase key (first 10 chars): {supabase_key[:10] if supabase_key else 'None'}")
+            logger.debug(f"Key type: {'SERVICE_ROLE_KEY' if config.SUPABASE_SERVICE_ROLE_KEY else 'ANON_KEY'}")
             
             # Create Supabase client with timeout configuration
             self._client = await create_async_client(
@@ -56,6 +59,12 @@ class DBConnection:
             self._initialized = True
             key_type = "SERVICE_ROLE_KEY" if config.SUPABASE_SERVICE_ROLE_KEY else "ANON_KEY"
             logger.debug(f"Database connection initialized with Supabase using {key_type}")
+            
+            # 添加客户端属性调试信息
+            logger.debug(f"Client type: {type(self._client)}")
+            logger.debug(f"Client supabase_url: {getattr(self._client, 'supabase_url', 'Not available')}")
+            logger.debug(f"Client supabase_key (first 10 chars): {getattr(self._client, 'supabase_key', 'Not available')[:10] if hasattr(self._client, 'supabase_key') and self._client.supabase_key else 'Not available'}")
+            logger.debug(f"Client headers: {getattr(self._client, '_headers', 'Not available')}")
             
         except Exception as e:
             logger.error(f"Database initialization error: {e}")

@@ -1003,6 +1003,23 @@ async def initiate_agent_with_files(
 
     logger.debug(f"[\033[91mDEBUG\033[0m] Initiating new agent with prompt and {len(files)} files (Instance: {instance_id}), model: {model_name}, enable_thinking: {enable_thinking}")
     client = await db.client
+    
+    # 添加详细的客户端调试信息
+    logger.debug(f"[AGENT INITIATE] Database client initialized: {type(client)}")
+    logger.debug(f"[AGENT INITIATE] Client supabase_url: {getattr(client, 'supabase_url', 'Not available')}")
+    logger.debug(f"[AGENT INITIATE] Client supabase_key (first 10 chars): {getattr(client, 'supabase_key', 'Not available')[:10] if hasattr(client, 'supabase_key') and client.supabase_key else 'Not available'}")
+    logger.debug(f"[AGENT INITIATE] Client headers: {getattr(client, '_headers', 'Not available')}")
+    
+    # 添加测试查询来验证连接
+    try:
+        logger.debug(f"[AGENT INITIATE] Testing database connection with simple query...")
+        test_result = await client.table('agents').select('count').limit(1).execute()
+        logger.debug(f"[AGENT INITIATE] Test query successful: {test_result}")
+    except Exception as test_error:
+        logger.error(f"[AGENT INITIATE] Test query failed: {test_error}")
+        logger.error(f"[AGENT INITIATE] Test error type: {type(test_error)}")
+        # 不抛出异常，继续执行主逻辑
+    
     account_id = user_id # In Basejump, personal account_id is the same as user_id
     
     # Load agent configuration with version support (same as start_agent endpoint)
@@ -1049,8 +1066,19 @@ async def initiate_agent_with_files(
     else:
         logger.debug(f"[AGENT INITIATE] No agent_id provided, querying for default agent")
         # Try to get default agent for the account
-        default_agent_result = await client.table('agents').select('*').eq('account_id', account_id).eq('is_default', True).execute()
-        logger.debug(f"[AGENT INITIATE] Default agent query result: found {len(default_agent_result.data) if default_agent_result.data else 0} default agents")
+        logger.debug(f"[AGENT INITIATE] About to execute query: client.table('agents').select('*').eq('account_id', {account_id}).eq('is_default', True)")
+        logger.debug(f"[AGENT INITIATE] Client type: {type(client)}")
+        logger.debug(f"[AGENT INITIATE] Client URL: {getattr(client, 'supabase_url', 'Unknown')}")
+        logger.debug(f"[AGENT INITIATE] Client headers: {getattr(client, '_headers', 'Unknown')}")
+        
+        try:
+            default_agent_result = await client.table('agents').select('*').eq('account_id', account_id).eq('is_default', True).execute()
+            logger.debug(f"[AGENT INITIATE] Default agent query result: found {len(default_agent_result.data) if default_agent_result.data else 0} default agents")
+        except Exception as e:
+            logger.error(f"[AGENT INITIATE] Database query failed with error: {e}")
+            logger.error(f"[AGENT INITIATE] Error type: {type(e)}")
+            logger.error(f"[AGENT INITIATE] Error details: {str(e)}")
+            raise
         
         if default_agent_result.data:
             agent_data = default_agent_result.data[0]
