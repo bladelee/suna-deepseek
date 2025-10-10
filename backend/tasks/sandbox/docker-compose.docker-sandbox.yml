@@ -1,0 +1,136 @@
+version: "3.8"
+
+services:
+  # Redis service for the application
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./services/docker/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    restart: unless-stopped
+    networks:
+      - app-network
+    command: redis-server /usr/local/etc/redis/redis.conf --appendonly yes --bind 0.0.0.0 --protected-mode no --maxmemory 8gb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Backend API service
+  api:
+    image: ghcr.io/suna-ai/suna-backend:latest
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /app/.venv
+      - ./logs:/app/logs
+      # Mount Docker socket for local sandbox management (Linux)
+      # For WSL2, we'll use TCP connection instead
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - LOG_LEVEL=INFO
+      - USE_LOCAL_DOCKER_SANDBOX=true
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Background worker service
+  worker:
+    image: ghcr.io/suna-ai/suna-backend:latest
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uv run dramatiq --skip-logging --processes 4 --threads 4 run_agent_background
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /app/.venv
+      - ./worker-logs:/app/logs
+      # Mount Docker socket for local sandbox management (Linux)
+      # For WSL2, we'll use TCP connection instead
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - LOG_LEVEL=INFO
+      - USE_LOCAL_DOCKER_SANDBOX=true
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "uv", "run", "worker_health.py"]
+      timeout: 20s
+      interval: 30s
+      start_period: 40s
+
+  # Optional: Supabase local development
+  supabase:
+    image: supabase/supabase-dev
+    ports:
+      - "54321:54321"
+      - "54322:54322"
+    environment:
+      - POSTGRES_PASSWORD=your-super-secret-and-long-postgres-password
+      - JWT_SECRET=your-super-secret-jwt-token-with-at-least-32-characters-long
+      - DASHBOARD_USERNAME=supabase
+      - DASHBOARD_PASSWORD=this_password_is_insecure_and_should_be_updated
+    volumes:
+      - supabase_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    profiles:
+      - supabase-local
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+  supabase_data:
