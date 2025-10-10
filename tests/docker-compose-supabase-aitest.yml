@@ -1,0 +1,174 @@
+version: '3.8'
+
+volumes:
+  db_data:
+  rest_data:
+
+networks:
+  supabase_network:
+    driver: bridge
+
+secrets:
+  jwt_secret:
+    file: ./backend/supabase/.jwt_secret
+  anon_key:
+    file: ./backend/supabase/.anon_key
+  service_role_key:
+    file: ./backend/supabase/.service_role_key
+
+x-common-vars:
+  &common-vars
+  POSTGRES_PASSWORD: postgres
+  POSTGRES_USER: postgres
+  POSTGRES_DB: postgres
+  PGPORT: 5432
+  PGPASSWORD: postgres
+  JWT_SECRET_FILE: /run/secrets/jwt_secret
+  ANON_KEY_FILE: /run/secrets/anon_key
+  SERVICE_ROLE_KEY_FILE: /run/secrets/service_role_key
+  POSTGRES_HOST: db
+  SUPABASE_URL: http://localhost:54321
+  SITE_URL: http://localhost:3000
+
+x-default-logging:
+  &default-logging
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+# 最小化Supabase服务
+# 只包含必要的服务：数据库、API网关、认证和Studio界面
+
+services:
+  # PostgreSQL数据库 - 核心服务
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./backend/supabase/migrations:/docker-entrypoint-initdb.d/migrations
+    environment:
+      <<: *common-vars
+    ports:
+      - "54322:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - supabase_network
+    <<: *default-logging
+
+  # API服务 - 提供RESTful API接口
+  rest:
+    image: postgrest/postgrest:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - rest_data:/data
+    environment:
+      <<: *common-vars
+      PGRST_DB_URI: postgres://postgres:postgres@db:5432/postgres
+      PGRST_DB_SCHEMAS: public,graphql_public,basejump
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET_FILE: /run/secrets/jwt_secret
+      PGRST_LOG_LEVEL: info
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - supabase_network
+    <<: *default-logging
+
+  # 认证服务 - 提供用户认证功能
+  auth:
+    image: supabase/gotrue:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *common-vars
+      GIN_MODE: release
+      GOTRUE_SITE_URL: "http://localhost:3000"
+      GOTRUE_JWT_SECRET_FILE: /run/secrets/jwt_secret
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_JWT_EXP: 3600
+    ports:
+      - "9999:9999"
+    networks:
+      - supabase_network
+    <<: *default-logging
+
+  # Studio界面 - 提供Supabase管理界面
+  studio:
+    image: supabase/studio:latest
+    restart: unless-stopped
+    depends_on:
+      rest:
+        condition: service_started
+      auth:
+        condition: service_started
+    environment:
+      <<: *common-vars
+      STUDIO_PG_META_URL: "http://pg-meta:8080"
+      STUDIO_API_URL: "http://localhost:54321"
+    ports:
+      - "54323:3000"
+    networks:
+      - supabase_network
+    <<: *default-logging
+
+  # PG Meta - 为Studio提供数据库元数据
+  pg-meta:
+    image: supabase/postgres-meta:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *common-vars
+      PG_META_DB_URL: postgres://postgres:postgres@db:5432/postgres
+      PG_META_PORT: 8080
+      PG_META_HOST: 0.0.0.0
+    networks:
+      - supabase_network
+    <<: *default-logging
+
+  # API网关 - 路由所有Supabase API请求
+  kong:
+    image: kong:2.8
+    restart: unless-stopped
+    depends_on:
+      rest:
+        condition: service_started
+      auth:
+        condition: service_started
+      pg-meta:
+        condition: service_started
+    volumes:
+      - ./backend/supabase/kong.yml:/etc/kong/kong.yml:ro
+    environment:
+      KONG_DATABASE: off
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 ssl
+    ports:
+      - "54321:8000"
+      - "8001:8001"
+    networks:
+      - supabase_network
+    <<: *default-logging

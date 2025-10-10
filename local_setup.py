@@ -12,6 +12,9 @@ import tempfile
 
 # --- Constants ---
 IS_WINDOWS = platform.system() == "Windows"
+# 检测Python版本是否支持capture_output参数（Python 3.7+）
+PYTHON_VERSION = sys.version_info
+SUPPORTS_CAPTURE_OUTPUT = PYTHON_VERSION >= (3, 7)
 
 # --- ANSI Colors ---
 class Colors:
@@ -43,6 +46,11 @@ def print_banner():
 {Colors.ENDC}
 """
     )
+
+def print_debug(message):
+    """Prints debug information in purple."""
+    print(f"{Colors.HEADER}[DEBUG] {message}{Colors.ENDC}")
+
 
 def print_step(step_num, total_steps, step_name):
     """Prints a formatted step header."""
@@ -127,6 +135,16 @@ def load_existing_env_vars():
                 "MCP_CREDENTIAL_ENCRYPTION_KEY", ""
             ),
         },
+        # 添加搜索和网页抓取API相关配置
+        "search": {
+            "TAVILY_API_KEY": backend_env.get("TAVILY_API_KEY", ""),
+            "FIRECRAWL_API_KEY": backend_env.get("FIRECRAWL_API_KEY", ""),
+            "FIRECRAWL_URL": backend_env.get("FIRECRAWL_URL", "https://api.firecrawl.dev"),
+        },
+        # 添加数据API相关配置
+        "data": {
+            "RAPID_API_KEY": backend_env.get("RAPID_API_KEY", ""),
+        },
     }
 
     return existing_vars
@@ -193,6 +211,14 @@ class SetupWizard:
             "mcp": {
                 "MCP_CREDENTIAL_ENCRYPTION_KEY": "",
             },
+            "search": {
+                "TAVILY_API_KEY": "",
+                "FIRECRAWL_API_KEY": "",
+                "FIRECRAWL_URL": "https://api.firecrawl.dev",
+            },
+            "data": {
+                "RAPID_API_KEY": "",
+            },
         }
 
         # Override with existing values if present
@@ -201,6 +227,18 @@ class SetupWizard:
                 for key, value in vars.items():
                     if value and key in self.env_vars[category]:
                         self.env_vars[category][key] = value
+
+        # 直接从backend/.env加载search和data相关的环境变量
+        backend_env = parse_env_file(os.path.join("backend", ".env"))
+        for key, value in backend_env.items():
+            if key == "TAVILY_API_KEY" and value:
+                self.env_vars["search"][key] = value
+            elif key == "FIRECRAWL_API_KEY" and value:
+                self.env_vars["search"][key] = value
+            elif key == "FIRECRAWL_URL" and value:
+                self.env_vars["search"][key] = value
+            elif key == "RAPID_API_KEY" and value:
+                self.env_vars["data"][key] = value
 
         self.total_steps = 6
 
@@ -299,24 +337,44 @@ class SetupWizard:
         # Try to find Supabase CLI in common locations
         # 1. Check if it's in the PATH
         try:
-            subprocess.run(
-                ["supabase", "--version"],
-                check=True,
-                capture_output=True,
-                shell=IS_WINDOWS,
-            )
+            # 根据Python版本选择合适的参数
+            if SUPPORTS_CAPTURE_OUTPUT:
+                subprocess.run(
+                    ["supabase", "--version"],
+                    check=True,
+                    capture_output=True,
+                    shell=IS_WINDOWS,
+                )
+            else:
+                subprocess.run(
+                    ["supabase", "--version"],
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=IS_WINDOWS,
+                )
             supabase_cli_path = "supabase"
         except (subprocess.SubprocessError, FileNotFoundError):
             # 2. Check if it's in node_modules
             local_supabase_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "node_modules", "supabase", "bin", "supabase")
             if os.path.exists(local_supabase_path):
                 try:
-                    subprocess.run(
-                        [local_supabase_path, "--version"],
-                        check=True,
-                        capture_output=True,
-                        shell=IS_WINDOWS,
-                    )
+                    # 根据Python版本选择合适的参数
+                    if SUPPORTS_CAPTURE_OUTPUT:
+                        subprocess.run(
+                            [local_supabase_path, "--version"],
+                            check=True,
+                            capture_output=True,
+                            shell=IS_WINDOWS,
+                        )
+                    else:
+                        subprocess.run(
+                            [local_supabase_path, "--version"],
+                            check=True,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            shell=IS_WINDOWS,
+                        )
                     supabase_cli_path = local_supabase_path
                     print_info(f"Found Supabase CLI in node_modules: {supabase_cli_path}")
                 except (subprocess.SubprocessError, FileNotFoundError):
@@ -343,6 +401,7 @@ class SetupWizard:
         is_docker = self.env_vars["setup_method"] == "docker"
         redis_host = "redis" if is_docker else "localhost"
 
+        # 创建基础环境变量
         backend_env = {
             "ENV_MODE": "local",
             **self.env_vars["supabase"],
@@ -354,15 +413,38 @@ class SetupWizard:
             "NEXT_PUBLIC_URL": "http://localhost:3002",
         }
 
+        # 构建backend.env内容
         backend_env_content = f"# Generated by Suna local setup script for '{self.env_vars['setup_method']}' setup\n\n"
+        
+        # 添加基础环境变量
         for key, value in backend_env.items():
             backend_env_content += f"{key}={value or ''}\n"
+        
+        # 添加搜索和网页抓取API配置
+        backend_env_content += "\n# Search and web scraping APIs\n"
+        for key, value in self.env_vars["search"].items():
+            if key == "FIRECRAWL_URL":
+                # 使用local_dev_key作为测试值
+                if not value:
+                    value = "https://api.firecrawl.dev"
+            elif not value:
+                # 对于API密钥，如果没有值，使用local_dev_key作为默认值
+                value = "local_dev_key"
+            backend_env_content += f"{key}={value}\n"
+        
+        # 添加数据API配置
+        backend_env_content += "\n# DATA APIS\n"
+        for key, value in self.env_vars["data"].items():
+            if not value:
+                # 使用local_dev_key作为默认值
+                value = "local_dev_key"
+            backend_env_content += f"{key}={value}\n"
 
         with open(os.path.join("backend", ".env"), "w") as f:
             f.write(backend_env_content)
-        print_success("Created backend/.env file.")
+        print_success("Created backend/.env file with search and data API configurations.")
 
-        # --- Frontend .env.local ---
+        # --- Frontend .env.local ---        
         frontend_env = {
             "NEXT_PUBLIC_SUPABASE_URL": self.env_vars["supabase"]["SUPABASE_URL"],
             "NEXT_PUBLIC_SUPABASE_ANON_KEY": self.env_vars["supabase"]["SUPABASE_ANON_KEY"],
@@ -379,6 +461,89 @@ class SetupWizard:
             f.write(frontend_env_content)
         print_success("Created frontend/.env.local file.")
 
+    def _execute_sql_command(self, sql_command, description):
+        """执行单个SQL命令并返回结果"""
+        print_info(f"  执行: {description}")
+        
+        # 使用 docker exec 执行 psql 命令
+        docker_command = [
+            "docker", "exec", "-it", "supabase-db", 
+            "psql", "-U", "postgres", "-c", sql_command
+        ]
+        
+        try:
+            # 根据Python版本选择合适的参数
+            if SUPPORTS_CAPTURE_OUTPUT:
+                result = subprocess.run(
+                    docker_command,
+                    capture_output=True,
+                    text=True,
+                    shell=IS_WINDOWS
+                )
+            else:
+                result = subprocess.run(
+                    docker_command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    shell=IS_WINDOWS
+                )
+            
+            if result.returncode == 0:
+                print_success(f"  ✓ 成功: {description}")
+                print_debug(f"  命令输出: {result.stdout.strip()[:100]}...")
+                return True
+            else:
+                print_warning(f"  ⚠️ 警告: 执行 '{description}' 时出现问题")
+                print_debug(f"  错误信息: {result.stderr.strip()}")
+                return False
+        except Exception as e:
+            print_warning(f"  ⚠️ 异常: 执行 '{description}' 时出现异常: {str(e)}")
+            print_info("  如果您使用的不是Docker环境，请手动执行这些SQL命令。")
+            return False
+            
+    def _prepare_supabase_database(self):
+        """准备Supabase数据库，解决已知的迁移问题"""
+        print_step(6, self.total_steps, "准备 Supabase 数据库环境")
+        
+        print_info("在执行迁移前，我们需要先解决已知的 Supabase 迁移问题：")
+        
+        # 定义需要执行的SQL命令列表和对应的描述
+        sql_operations = [
+            # 问题1: 安装 pgcrypto 扩展
+            ("CREATE EXTENSION IF NOT EXISTS pgcrypto;", "安装 pgcrypto 扩展"),
+            
+            # 问题2: 创建 extensions 模式并安装 uuid-ossp 扩展
+            ("CREATE SCHEMA IF NOT EXISTS extensions; DROP EXTENSION IF EXISTS \"uuid-ossp\"; CREATE EXTENSION \"uuid-ossp\" SCHEMA extensions;", "创建 extensions 模式并安装 uuid-ossp 扩展"),
+            
+            # 问题3: 修改数据库搜索路径
+            ("ALTER DATABASE postgres SET search_path TO public, graphql_public, basejump, extensions;", "修改数据库搜索路径，添加 extensions 模式"),
+            
+            # 问题4: 创建 storage 模式、表和函数
+            ("CREATE SCHEMA IF NOT EXISTS storage; CREATE TABLE IF NOT EXISTS storage.buckets (id TEXT PRIMARY KEY, name TEXT, owner TEXT, public BOOLEAN, created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(), updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()); ALTER TABLE storage.buckets ADD COLUMN IF NOT EXISTS file_size_limit BIGINT; ALTER TABLE storage.buckets ADD COLUMN IF NOT EXISTS allowed_mime_types TEXT[]; CREATE TABLE IF NOT EXISTS storage.objects (id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), bucket_id TEXT REFERENCES storage.buckets(id), name TEXT, owner TEXT, created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(), updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(), last_accessed_at TIMESTAMP WITH TIME ZONE, metadata JSONB, path_tokens TEXT[], size BIGINT, mime_type TEXT); CREATE OR REPLACE FUNCTION storage.foldername(name TEXT) RETURNS TEXT[] AS $$ SELECT string_to_array(regexp_replace(name, '^/?|/?$', '', 'g'), '/') $$ LANGUAGE sql IMMUTABLE;", "创建 storage 模式、buckets 和 objects 表及相关函数"),
+            
+            # 问题6: 创建 supabase_realtime publication
+            ("CREATE PUBLICATION supabase_realtime;", "创建 supabase_realtime publication 以支持实时功能"),
+        ]
+        
+        # 执行每个SQL命令
+        print_info(f"将执行 {len(sql_operations)} 个数据库准备步骤...")
+        success_count = 0
+        
+        for i, (sql_command, description) in enumerate(sql_operations, 1):
+            print_info(f"步骤 {i}/{len(sql_operations)}: {description}")
+            if self._execute_sql_command(sql_command, description):
+                success_count += 1
+            print_info("---")
+        
+        print_info(f"数据库准备步骤完成: {success_count}/{len(sql_operations)} 个步骤成功执行")
+        if success_count < len(sql_operations):
+            print_warning("部分数据库准备步骤执行失败，可能会影响后续迁移。请根据警告信息检查问题。")
+        else:
+            print_success("所有数据库准备步骤已成功执行！")
+        
+        return success_count >= len(sql_operations)  # 返回是否所有步骤都成功
+        
     def setup_supabase_database(self):
         """Pushes database migrations to the local Supabase instance."""
         print_step(6, self.total_steps, "Setting up Supabase Database")
@@ -402,14 +567,63 @@ class SetupWizard:
 
         try:
             print_info("正在推送数据库迁移...")
-            # 运行数据库迁移推送命令，直接应用到本地数据库，使用--local参数避免需要link
-            push_result = subprocess.run(
-                [supabase_cli_path, "db", "push", "--local"],
-                cwd="backend",
-                capture_output=True,
-                text=True,
-                shell=IS_WINDOWS,
-            )
+            # 直接指定数据库连接URL，明确使用5432端口（用户的PostgreSQL运行端口）
+            # 添加sslmode=disable参数以禁用TLS连接
+            db_url = "postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable"
+            
+            # 添加调试打印信息
+            print_debug(f"当前执行路径: {os.getcwd()}")
+            print_debug(f"后端目录路径: {os.path.abspath('backend')}")
+            print_debug(f"Supabase CLI路径: {supabase_cli_path}")
+            print_debug(f"使用的数据库连接URL: {db_url}")
+            
+            # 添加数据库连接测试
+            try:
+                import psycopg2
+                print_debug("尝试直接使用psycopg2连接数据库...")
+                conn = psycopg2.connect(db_url)
+                cursor = conn.cursor()
+                cursor.execute("SELECT version();")
+                version = cursor.fetchone()[0]
+                print_debug(f"数据库连接成功！PostgreSQL版本: {version[:30]}...")
+                cursor.close()
+                conn.close()
+            except ImportError:
+                print_debug("psycopg2模块未安装，跳过直接连接测试")
+            except Exception as e:
+                print_debug(f"直接连接数据库失败: {str(e)}")
+            
+            # 在执行迁移前，先解决已知的 Supabase 迁移问题
+            print_info("\n=== 开始数据库环境准备 ===")
+            self._prepare_supabase_database()
+            print_info("=== 数据库环境准备完成 ===\n")
+            
+            # 添加--debug参数进行详细调试
+            command = [supabase_cli_path, "db", "push", "--db-url", db_url, "--debug"]
+            print_debug(f"执行的命令: {' '.join(command)}")
+            
+            # 根据Python版本选择合适的参数
+            if SUPPORTS_CAPTURE_OUTPUT:
+                push_result = subprocess.run(
+                    command,
+                    cwd="backend",
+                    capture_output=True,
+                    text=True,
+                    shell=IS_WINDOWS
+                )
+            else:
+                push_result = subprocess.run(
+                    command,
+                    cwd="backend",
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    shell=IS_WINDOWS
+                )
+                
+            # 打印命令的完整输出
+            print_debug(f"命令标准输出: {push_result.stdout}")
+            print_debug(f"命令标准错误: {push_result.stderr}")
             
             if push_result.returncode == 0:
                 print_success("数据库迁移已成功推送到本地Supabase实例。")
@@ -420,14 +634,20 @@ class SetupWizard:
                 
                 # 常见错误处理
                 if "connection refused" in error_msg.lower():
-                    print_info("错误提示: 无法连接到Supabase实例。请确保本地Supabase服务正在运行。")
-                    print_info("你可以检查Docker容器状态确认服务是否正常运行。")
+                    print_info("错误提示: 无法连接到PostgreSQL实例。请确保PostgreSQL服务正在运行。")
+                    print_info("你可以使用命令检查服务状态: systemctl status postgresql 或 docker ps")
+                    print_info(f"当前配置的连接端口: 5432")
+                elif "tls error" in error_msg.lower() or "ssl" in error_msg.lower():
+                    print_info("错误提示: TLS/SSL连接被拒绝。")
+                    print_info("我们已经在连接URL中添加了sslmode=disable参数，但仍然遇到问题。")
+                    print_info("请检查PostgreSQL的ssl配置是否正确。")
                 elif "cannot find project ref" in error_msg.lower():
                     print_info("错误提示: 找不到项目引用。这通常表示需要先执行link命令。")
                     print_info("你可以尝试手动执行: supabase link --project-ref your-project-ref")
                 else:
                     print_info("请检查错误信息并尝试解决问题。")
-                    print_info("如果问题仍然存在，你可以尝试手动执行: supabase db push --local")
+                    print_info(f"当前使用的命令: {' '.join(command)}")
+                    print_info("建议: 你可以尝试在终端中直接运行上述命令，获取更详细的错误信息。")
                     
             # 即使迁移推送有问题，也继续执行（不退出脚本）
             print_info("数据库设置流程已完成。")
@@ -452,47 +672,46 @@ class SetupWizard:
             print_info("Installing backend dependencies...")
             # Check if uv is available
             try:
-                subprocess.run(
-                    ["uv", "--version"],
-                    check=True,
-                    capture_output=True,
-                    shell=IS_WINDOWS,
-                )
+                # 根据Python版本选择合适的参数
+                if SUPPORTS_CAPTURE_OUTPUT:
+                    subprocess.run(
+                        ["uv", "--version"],
+                        check=True,
+                        capture_output=True,
+                        shell=IS_WINDOWS,
+                    )
+                else:
+                    subprocess.run(
+                        ["uv", "--version"],
+                        check=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        shell=IS_WINDOWS,
+                    )
                 # Use uv if available
                 print_info("Using uv for dependency installation...")
-                
-                # Check if a virtual environment already exists
-                venv_exists = os.path.exists(os.path.join("backend", ".venv"))
-
-                if not venv_exists:
-                    print_info("Creating virtual environment...")
-                    subprocess.run(
-                        ["uv", "venv"], cwd="backend", check=True, shell=IS_WINDOWS
-                    )
-                    print_success("Virtual environment created.")
-
-                # Install dependencies in the virtual environment
                 subprocess.run(
-                    ["uv", "sync"],
+                    ["uv", "pip", "install", "-e", "."],
                     cwd="backend",
                     check=True,
                     shell=IS_WINDOWS,
                 )
-            except subprocess.SubprocessError:
-                # Fall back to pip if uv is not available
-                print_info("uv not found, using pip...")
+                print_success("Backend dependencies installed with uv.")
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                # Fallback to pip if uv is not available
+                print_info("uv not available, using pip for dependency installation...")
                 subprocess.run(
-                    ["pip", "install", "-e", "."],
+                    [sys.executable, "-m", "pip", "install", "-e", "."],
                     cwd="backend",
                     check=True,
                     shell=IS_WINDOWS,
                 )
-            print_success("Backend dependencies installed.")
-
-        except subprocess.SubprocessError as e:
-            print_error(f"Failed to install dependencies: {e}")
-            print_info("Please install dependencies manually and run the script again.")
-            sys.exit(1)
+                print_success("Backend dependencies installed with pip.")
+        except subprocess.CalledProcessError as e:
+            print_error(f"Failed to install dependencies: {str(e)}")
+            print_info("You may need to install dependencies manually.")
+        except Exception as e:
+            print_error(f"An error occurred during dependency installation: {str(e)}")
 
 
     
@@ -512,11 +731,7 @@ class SetupWizard:
             self.configure_env_files()
             self.setup_supabase_database()
             
-            # Optional dependency installation
-            install_deps = input("Do you want to install dependencies now? (Y/n): ").lower().strip()
-            if install_deps != 'n':
-                self.install_dependencies()
-            
+            # Dependencies installation skipped as requested
             self.final_instructions()
 
         except KeyboardInterrupt:

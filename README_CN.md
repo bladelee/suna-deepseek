@@ -31,15 +31,30 @@ Kortix是一个全面的开源平台，让您能够构建、管理和训练复�
 ## 🌟 云端linux服务器部署步骤，使用本机docker容器作为运行时
 
 前置条件： 安装python3，node 22，docker compose，supabase cli
-步骤：
-     1. 配置环境变量 env.example为 .env, 以及 kong.yml
+初次安装步骤：
+     1.下载发行版压缩包，解压到该目录，配置环境变量 env.example为 .env, 以及 kong.yml
+        mkdir suna-deepseek
+        cd suna-deepseek
+        curl  -L 'https://packages.aliyun.com/api/protocol/61fa91fbc5006adb19fe45ab/generic/suna-deepseek/files/suna-deepseek-202510072104.tar.gz?version=202510072104&userId=5ffc7f3b8e57bd6e429e3056&expiration=1775394254563&signature=decb4aaaf7129ec58308b4c2b07e3392' -o suna-deepseek.tar.gz
+        tar -xzvf suna-deepseek.tar.gz
+        mv 2025*/* .
+        rm -rf suna-deepseek.tar.gz
+        rm -rf 2025*
+        chmod +x *.sh
      2. 用docker compose 部署本地supabase. 
           docker compose -f docker-compose-supabase-official up -d
      3. 运行 run_role_fix.sh, supabase 角色和权限修复脚本,建立 supabase的角色和授权等  
      4. 运行 local_setup.py 创建环境变量并推送数据库，检查 frontend/env.local 和 backend/.env 的配置是否正确，可修改为远端daytona的默认地址
      5. 运行 docker compose 部署启动应用  
-          docker compose -f docker-compose.yaml up
-         
+          docker compose -f docker-compose-cn-run.yaml up
+
+如果是更新到最先版本，则停止原有suna相关容器，然后重新启动：         
+          docker compose -f docker-compose-cn-run.yaml down
+
+如果有数据库的更新，则需要先重复上面第四步，推送数据库迁移。最后是启动suna相关容器：          
+          docker compose -f docker-compose-cn-run.yaml up --pull=always
+
+
 
 ## 🌟 Kortix 的独特之处
 

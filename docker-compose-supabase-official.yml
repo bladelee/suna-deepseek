@@ -64,6 +64,7 @@ services:
       - GOTRUE_API_PORT=9999
       - GOTRUE_SITE_URL=${SUPABASE_URL}
       - API_EXTERNAL_URL=http://localhost:8000
+      - GOTRUE_MAILER_AUTOCONFIRM=${ENABLE_EMAIL_AUTOCONFIRM}      
     restart: unless-stopped
 
   # 管理界面

@@ -1,5 +1,8 @@
 .DS_Store
 
+release_script.sh
+backend/supabase/*
+installer-wizard
 test_env
 venv
 .env

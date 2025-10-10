@@ -1,0 +1,16 @@
+{
+  "name": "github-proxy-tester",
+  "version": "1.0.0",
+  "description": "测试代理服务器是否能正常访问GitHub.com",
+  "type": "module",
+  "main": "test_github_proxy.js",
+  "scripts": {
+    "test": "node test_github_proxy.js"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.0",
+    "https-proxy-agent": "^7.0.2"
+  },
+  "author": "",
+  "license": "ISC"
+}
