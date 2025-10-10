@@ -155,7 +155,7 @@ export default function AgentsPage() {
           id: template.template_id,
           creator_id: template.creator_id,
           name: template.name,
-          description: template.description,
+          description: template.description || '',
           tags: template.tags || [],
           download_count: template.download_count || 0,
           creator_name: template.creator_name || 'Anonymous',
@@ -592,7 +592,7 @@ export default function AgentsPage() {
               onClearFilters={clearAgentsFilters}
               isDeletingAgent={isDeletingAgent}
               setAgentsPage={setAgentsPage}
-              myTemplates={myTemplates}
+              myTemplates={myTemplates || []}
               templatesLoading={templatesLoading}
               templatesError={templatesError}
               templatesActioningId={templatesActioningId}

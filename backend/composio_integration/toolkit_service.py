@@ -268,6 +268,12 @@ class ToolkitService:
             logger.debug(f"Successfully fetched icon for {toolkit_slug}: {logo}")
             return logo
             
+        except ValueError as e:
+            if "COMPOSIO_API_KEY is required" in str(e):
+                logger.warning(f"COMPOSIO_API_KEY is not configured, cannot fetch icon for {toolkit_slug}")
+                return None
+            logger.error(f"Failed to get toolkit icon for {toolkit_slug}: {e}")
+            return None
         except Exception as e:
             logger.error(f"Failed to get toolkit icon for {toolkit_slug}: {e}")
             return None
@@ -489,4 +495,4 @@ class ToolkitService:
                 total_items=0,
                 current_page=1,
                 total_pages=1
-            ) 
+            )

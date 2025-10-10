@@ -4,7 +4,10 @@ import { useState } from 'react';
 import { useActionState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { createTeam } from '@/lib/actions/teams';
+import { createTeamFn } from '@/lib/actions-import';
+
+// 为了保持代码一致性，重命名为createTeam
+const createTeam = createTeamFn;
 import { SubmitButton } from '@/components/ui/submit-button';
 import { AtSign, Check, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -103,9 +106,7 @@ export default function NewTeamForm() {
       )}
 
       <SubmitButton
-        formAction={async (prevState: any, formData: FormData) =>
-          formAction(formData)
-        }
+        formAction={createTeam}
         pendingText="Creating team..."
         className={cn(
           'w-full rounded-lg shadow-xs transition-all',

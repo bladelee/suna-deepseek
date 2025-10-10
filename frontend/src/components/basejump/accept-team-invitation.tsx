@@ -1,4 +1,4 @@
-import { acceptInvitation } from '@/lib/actions/invitations';
+import { invitations } from '@/lib/actions-import';
 import { createClient } from '@/lib/supabase/server';
 import { Alert } from '../ui/alert';
 import { Card, CardContent } from '../ui/card';
@@ -24,7 +24,7 @@ export default async function AcceptTeamInvitation({ token }: Props) {
           <form>
             <input type="hidden" name="token" value={token} />
             <SubmitButton
-              formAction={acceptInvitation}
+              formAction={invitations.acceptInvitation}
               pendingText="Accepting invitation..."
             >
               Accept invitation

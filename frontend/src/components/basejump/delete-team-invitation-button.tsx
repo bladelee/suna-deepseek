@@ -12,7 +12,10 @@ import {
 import { useState } from 'react';
 import { Trash } from 'lucide-react';
 import { SubmitButton } from '../ui/submit-button';
-import { deleteInvitation } from '@/lib/actions/invitations';
+import { deleteInvitationFn } from '@/lib/actions-import';
+
+// 为了保持代码一致性，重命名为deleteInvitation
+const deleteInvitation = deleteInvitationFn;
 import { usePathname } from 'next/navigation';
 
 type Props = {

@@ -5,6 +5,14 @@ export enum EnvMode {
   PRODUCTION = 'production',
 }
 
+// Environment detection functions
+export const isElectron = (): boolean => {
+  // 检查window.electronAPI是否存在（通过preload.js暴露）
+  return typeof window !== 'undefined' && typeof window.electronAPI !== 'undefined';
+};
+
+export const isWeb = (): boolean => !isElectron();
+
 // Subscription tier structure
 export interface SubscriptionTierData {
   priceId: string;
@@ -200,20 +208,21 @@ const STAGING_TIERS: SubscriptionTiers = {
 } as const;
 
 function getEnvironmentMode(): EnvMode {
-  const envMode = process.env.NEXT_PUBLIC_ENV_MODE.toUpperCase();
-  switch (envMode) {
+  const envMode = process.env.NEXT_PUBLIC_ENV_MODE;
+  if (!envMode) {
+    return process.env.NODE_ENV === 'development' ? EnvMode.LOCAL : EnvMode.PRODUCTION;
+  }
+  
+  const upperEnvMode = envMode.toUpperCase();
+  switch (upperEnvMode) {
     case 'LOCAL':
       return EnvMode.LOCAL;
     case 'STAGING':
       return EnvMode.STAGING;
     case 'PRODUCTION':
       return EnvMode.PRODUCTION;
-  //   default:
-  //     if (process.env.NODE_ENV === 'development') {
-  //       return EnvMode.LOCAL;
-  //     } else {
-  //       return EnvMode.PRODUCTION;
-  //     }
+    default:
+      return process.env.NODE_ENV === 'development' ? EnvMode.LOCAL : EnvMode.PRODUCTION;
   }
 }
 

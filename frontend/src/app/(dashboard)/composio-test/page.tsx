@@ -614,19 +614,19 @@ export default function ComposioTestPage() {
                           <Label className="text-xs font-medium text-muted-foreground">Server ID</Label>
                           <div className="flex items-center gap-2 mt-1">
                             <code className="bg-background px-2 py-1 rounded text-sm flex-1">
-                              {testResult.mcp_urls.mcp_server_info.id}
+                              {testResult?.mcp_urls?.mcp_server_info?.id || 'N/A'}
                             </code>
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => copyToClipboard(testResult.mcp_urls.mcp_server_info.id)}
+                              onClick={() => copyToClipboard(testResult?.mcp_urls?.mcp_server_info?.id || '')}
                             >
                               <Copy className="h-3 w-3" />
                             </Button>
                           </div>
                         </div>
 
-                        {testResult.mcp_urls.mcp_server_info.name && (
+                        {testResult?.mcp_urls?.mcp_server_info?.name && (
                           <div>
                             <Label className="text-xs font-medium text-muted-foreground">Server Name</Label>
                             <p className="text-sm mt-1">{testResult.mcp_urls.mcp_server_info.name}</p>
@@ -769,4 +769,4 @@ export default function ComposioTestPage() {
         </div>
     </div>
   );
-} 
+}

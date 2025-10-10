@@ -8,7 +8,14 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "electron:dev": "NODE_ENV=development electron .",
+    "electron:build": "node scripts/build-electron.js",
+    "electron:build-win": "node scripts/build-electron.js win",
+    "electron:build-mac": "node scripts/build-electron.js mac",
+    "electron:build-linux": "node scripts/build-electron.js linux",
+    "electron:pack": "npm run build && electron-builder --dir",
+    "electron:dist": "npm run electron:build"
   },
   "dependencies": {
     "@calcom/embed-react": "^1.5.2",
@@ -59,7 +66,6 @@
     "@vercel/edge-config": "^1.4.0",
     "@vercel/speed-insights": "^1.2.0",
     "autoprefixer": "10.4.17",
-    "canvas": "^3.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^0.2.1",
@@ -87,7 +93,6 @@
     "next": "^15.3.1",
     "next-themes": "^0.4.6",
     "papaparse": "^5.5.2",
-    "pdfjs-dist": "4.8.69",
     "postcss": "8.4.33",
     "posthog-js": "^1.258.6",
     "posthog-node": "^5.6.0",
@@ -99,7 +104,6 @@
     "react-icons": "^5.5.0",
     "react-markdown": "^10.1.0",
     "react-papaparse": "^4.4.0",
-    "react-pdf": "^9.2.1",
     "react-phone-number-input": "^3.4.12",
     "react-scan": "^0.0.44",
     "rehype-raw": "^7.0.0",
@@ -127,6 +131,8 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.0.0",
     "encoding": "^0.1.13",
     "eslint": "^9",
     "eslint-config-next": "15.2.2",
@@ -135,5 +141,86 @@
     "tailwindcss": "^4",
     "tw-animate-css": "^1.2.4",
     "typescript": "^5"
+  },
+  "main": "electron/main.js",
+  "homepage": "./",
+  "build": {
+    "appId": "com.kortix.app",
+    "productName": "Kortix",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "out/**/*",
+      "electron/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "public/icon.png",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "win": {
+      "icon": "public/icon.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        }
+      ]
+    },
+    "linux": {
+      "icon": "public/icon.png",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "rpm",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

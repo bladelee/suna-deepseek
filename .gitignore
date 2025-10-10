@@ -1,5 +1,11 @@
 .DS_Store
 
+test_env
+venv
+.env
+frontend/dist-electron
+node_modules
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

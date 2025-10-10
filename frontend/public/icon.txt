@@ -1,0 +1,1 @@
+Placeholder icon file - replace with proper 256x256 PNG icon for production use

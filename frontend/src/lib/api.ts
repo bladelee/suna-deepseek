@@ -1,4 +1,96 @@
 import { createClient } from '@/lib/supabase/client';
+// Mock implementations for Electron build
+
+export async function fetchTeamMembers(accountSlug: string) {
+  console.warn('Using mock implementation for fetchTeamMembers in Electron build');
+  // Return mock data
+  return [
+    {
+      id: 'user-1',
+      name: 'John Doe',
+      email: 'john@example.com',
+      role: 'owner',
+      avatar_url: 'https://ui-avatars.com/api/?name=John+Doe&background=random'
+    },
+    {
+      id: 'user-2',
+      name: 'Jane Smith',
+      email: 'jane@example.com',
+      role: 'admin',
+      avatar_url: 'https://ui-avatars.com/api/?name=Jane+Smith&background=random'
+    },
+    {
+      id: 'user-3',
+      name: 'Mike Johnson',
+      email: 'mike@example.com',
+      role: 'member',
+      avatar_url: 'https://ui-avatars.com/api/?name=Mike+Johnson&background=random'
+    }
+  ];
+}
+
+export async function fetchTeamBySlug(accountSlug: string) {
+  console.warn('Using mock implementation for fetchTeamBySlug in Electron build');
+  // Return mock data
+  return {
+    id: 'team-' + accountSlug,
+    name: accountSlug.charAt(0).toUpperCase() + accountSlug.slice(1),
+    slug: accountSlug,
+    description: 'A sample team description',
+    owner_id: 'user-1',
+    admins: ['user-1', 'user-2'],
+    members_count: 3,
+    created_at: new Date().toISOString(),
+    visibility: 'private'
+  };
+}
+
+export async function updateTeamMemberRole(memberId: string, role: string) {
+  console.warn('Using mock implementation for updateTeamMemberRole in Electron build');
+  // Simulate successful update
+  return Promise.resolve({ success: true, memberId, role });
+}
+
+export async function fetchUserSettings() {
+  console.warn('Using mock implementation for fetchUserSettings in Electron build');
+  // Return mock settings data
+  return {
+    theme: 'system',
+    notifications: {
+      email: true,
+      push: true,
+      desktop: true,
+      agentUpdates: true,
+      teamUpdates: true,
+      systemUpdates: true,
+    },
+    language: 'en',
+    timezone: 'UTC',
+    editorPreferences: {
+      fontSize: 14,
+      theme: 'vs-dark',
+      wordWrap: true,
+    },
+    workspacePreferences: {
+      defaultView: 'dashboard',
+      sidebarWidth: 240,
+      showLabels: true,
+    }
+  };
+}
+
+export async function updateUserSettings(settings: any) {
+  console.warn('Using mock implementation for updateUserSettings in Electron build');
+  // Simulate successful update
+  return Promise.resolve(settings);
+}
+
+export async function removeTeamMember(memberId: string) {
+  console.warn('Using mock implementation for removeTeamMember in Electron build');
+  // Simulate successful removal
+  return { success: true, memberId };
+}
+
 import { handleApiError } from './error-handler';
 import posthog from 'posthog-js';
 

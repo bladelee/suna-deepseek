@@ -533,8 +533,20 @@ async def get_toolkit_icon(
                 "success": False,
                 "toolkit_slug": toolkit_slug,
                 "icon_url": None,
-                "message": "Icon not found"
+                "message": "Icon not found or COMPOSIO API key not configured"
             }
+    
+    except ValueError as e:
+        if "COMPOSIO_API_KEY is required" in str(e):
+            logger.warning("COMPOSIO_API_KEY is not configured, cannot fetch toolkit icon")
+            return {
+                "success": False,
+                "toolkit_slug": toolkit_slug,
+                "icon_url": None,
+                "message": "COMPOSIO API key not configured"
+            }
+        logger.error(f"Error getting toolkit icon: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
     
     except Exception as e:
         logger.error(f"Error getting toolkit icon: {e}")

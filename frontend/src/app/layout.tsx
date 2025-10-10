@@ -5,9 +5,9 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from '@/components/ui/sonner';
-import { Analytics } from '@vercel/analytics/react';
-import { GoogleAnalytics } from '@next/third-parties/google';
-import { SpeedInsights } from '@vercel/speed-insights/next';
+// import { Analytics } from '@vercel/analytics/react'; // 禁用Vercel Analytics
+// import { GoogleAnalytics } from '@next/third-parties/google'; // 禁用Google Analytics
+// import { SpeedInsights } from '@vercel/speed-insights/next'; // 禁用Vercel Speed Insights
 import Script from 'next/script';
 import { PostHogIdentify } from '@/components/posthog-identify';
 import '@/lib/polyfills'; // Load polyfills early
@@ -131,6 +131,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans bg-background`}
       >
+        {/* 禁用Google Tag Manager以防止Google Analytics请求 */}
+        {/*
         <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-PCHSN4M2"
@@ -139,7 +141,7 @@ export default function RootLayout({
             style={{ display: 'none', visibility: 'hidden' }}
           />
         </noscript>
-        {/* End Google Tag Manager (noscript) */}
+        */}
 
         <ThemeProvider
           attribute="class"
@@ -151,9 +153,9 @@ export default function RootLayout({
             {children}
             <Toaster />
           </Providers>
-          <Analytics />
-          <GoogleAnalytics gaId="G-6ETJFB3PT3" />
-          <SpeedInsights />
+          {/* <Analytics /> */} {/* 禁用Vercel Analytics */}
+          {/* <GoogleAnalytics gaId="G-6ETJFB3PT3" /> */} {/* 禁用Google Analytics */}
+          {/* <SpeedInsights /> */} {/* 禁用Vercel Speed Insights */}
           <PostHogIdentify />
         </ThemeProvider>
       </body>

@@ -136,12 +136,17 @@ allow_origin_regex = None
 # Add staging-specific origins
 if config.ENV_MODE == EnvMode.LOCAL:
     allowed_origins.append("http://localhost:3000")
+    allowed_origins.append("http://localhost:3002")
 
 # Add staging-specific origins
 if config.ENV_MODE == EnvMode.STAGING:
     allowed_origins.append("https://staging.suna.so")
     allowed_origins.append("http://localhost:3000")
+    allowed_origins.append("http://localhost:3002")    
     allow_origin_regex = r"https://suna-.*-prjcts\.vercel\.app"
+
+# Add IP address for current deployment
+allowed_origins.append("http://43.142.57.20:3002")
 
 app.add_middleware(
     CORSMiddleware,
@@ -242,11 +247,11 @@ if __name__ == "__main__":
     
     workers = 4
     
-    logger.debug(f"Starting server on 0.0.0.0:8000 with {workers} workers")
+    logger.debug(f"Starting server on 0.0.0.0:8001 with {workers} workers")
     uvicorn.run(
         "api:app", 
         host="0.0.0.0", 
-        port=8000,
+        port=8001,
         workers=workers,
         loop="asyncio"
     )
