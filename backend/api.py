@@ -147,6 +147,7 @@ if config.ENV_MODE == EnvMode.STAGING:
 
 # Add IP address for current deployment
 allowed_origins.append("http://43.142.57.20:3002")
+allowed_origins.append("http://172.28.83.52:3002")
 
 app.add_middleware(
     CORSMiddleware,
