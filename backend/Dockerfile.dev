@@ -16,6 +16,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     (echo "uv sync failed, trying without cache..." && \
      uv sync --quiet)
 
+# 复制源代码文件（开发环境会通过挂载覆盖）
+COPY . .
+
 # 创建必要的目录结构
 RUN mkdir -p /app/daemon-proxy
 
@@ -25,12 +28,8 @@ COPY sandbox/daemon-proxy/daytona-daemon-static /app/daemon-proxy/daytona-daemon
 # 复制配置文件
 COPY dockers/config.daemon.yaml /app/config.daemon.yaml
 
-# 复制启动脚本
-COPY dockers/start-dev-daemon-proxy.sh /app/scripts/start-dev-daemon-proxy.sh
-
-# 设置执行权限
-RUN chmod +x /app/daemon-proxy/daytona-daemon-static && \
-    chmod +x /app/scripts/start-dev-daemon-proxy.sh
+# 设置执行权限（启动脚本通过挂载提供）
+RUN chmod +x /app/daemon-proxy/daytona-daemon-static
 
 # 验证文件
 RUN ls -la /app/daemon-proxy/daytona-daemon-static

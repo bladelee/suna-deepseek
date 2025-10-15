@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # 开发环境启动脚本
 # 用途: 启动开发环境的Suna Backend服务，支持daemon-proxy功能
