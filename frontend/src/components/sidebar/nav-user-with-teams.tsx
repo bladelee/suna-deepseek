@@ -53,6 +53,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useTheme } from 'next-themes';
 import { isLocalMode } from '@/lib/config';
 import { useFeatureFlag } from '@/lib/feature-flags';
+import { LanguageSelector } from '@/components/language-selector';
 
 export function NavUserWithTeams({
   user,
@@ -320,6 +321,11 @@ export function NavUserWithTeams({
                     Settings
                   </Link>
                 </DropdownMenuItem> */}
+                <DropdownMenuItem asChild>
+                  <div className="w-full">
+                    <LanguageSelector />
+                  </div>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
                 >

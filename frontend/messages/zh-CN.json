@@ -1,0 +1,221 @@
+{
+  "dashboard": {
+    "title": "今天想做什么？",
+    "placeholder": "描述你需要帮助的事项...",
+    "examples": {
+      "research": "研究一个主题",
+      "analysis": "分析数据",
+      "automation": "自动化任务",
+      "writing": "撰写内容",
+      "coding": "编写或调试代码"
+    },
+    "customAgents": {
+      "title": "自定义代理、剧本等更多功能！",
+      "link": "/agents?tab=my-agents"
+    }
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "confirm": "确认",
+    "delete": "删除",
+    "edit": "编辑",
+    "add": "添加",
+    "remove": "移除",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "warning": "警告",
+    "info": "信息",
+    "retry": "重试",
+    "close": "关闭",
+    "submit": "提交",
+    "back": "返回",
+    "next": "下一步",
+    "previous": "上一步",
+    "search": "搜索",
+    "filter": "筛选",
+    "clear": "清除",
+    "refresh": "刷新",
+    "copy": "复制",
+    "share": "分享",
+    "download": "下载",
+    "upload": "上传",
+    "settings": "设置",
+    "help": "帮助",
+    "about": "关于",
+    "moreActions": "更多操作",
+    "openInNewTab": "在新标签页中打开"
+  },
+  "navigation": {
+    "dashboard": "仪表板",
+    "agents": "代理",
+    "playbooks": "剧本",
+    "projects": "项目",
+    "settings": "设置",
+    "billing": "账单",
+    "account": "账户",
+    "help": "帮助",
+    "logout": "退出",
+    "newThread": "新对话",
+    "tasks": "任务"
+  },
+  "auth": {
+    "login": "登录",
+    "logout": "退出",
+    "signup": "注册",
+    "email": "邮箱",
+    "password": "密码",
+    "confirmPassword": "确认密码",
+    "forgotPassword": "忘记密码？",
+    "resetPassword": "重置密码",
+    "rememberMe": "记住我",
+    "alreadyHaveAccount": "已有账户？",
+    "dontHaveAccount": "没有账户？",
+    "createAccount": "创建账户"
+  },
+  "forms": {
+    "required": "此字段为必填项",
+    "invalidEmail": "请输入有效的邮箱地址",
+    "passwordTooShort": "密码至少需要 {{minLength}} 个字符",
+    "passwordsNotMatch": "两次输入的密码不匹配",
+    "genericError": "发生错误，请重试"
+  },
+  "thread": {
+    "newThread": "新对话",
+    "sendMessage": "发送消息",
+    "attachFiles": "附加文件",
+    "voiceInput": "语音输入",
+    "stopGenerating": "停止生成",
+    "regenerate": "重新生成",
+    "copy": "复制",
+    "share": "分享",
+    "shareChat": "分享对话",
+    "delete": "删除",
+    "retry": "重试",
+    "thinking": "思考中...",
+    "typing": "输入中...",
+    "you": "您",
+    "agent": "代理",
+    "noTasksYet": "暂无任务",
+    "deleteSuccess": "对话删除成功",
+    "deleteError": "删除对话时出错",
+    "deleteInitError": "启动删除流程时出错",
+    "deleting": "删除中{{progress, percent}}",
+    "deletingMultiple": "正在删除 {{count}} 个对话...",
+    "deleteMultipleSuccess": "成功删除 {{count}} 个对话",
+    "deleteMultipleFailed": "{{count}} 个对话删除失败"
+  },
+  "agents": {
+    "createAgent": "创建代理",
+    "editAgent": "编辑代理",
+    "deleteAgent": "删除代理",
+    "agentName": "代理名称",
+    "agentDescription": "代理描述",
+    "agentModel": "代理模型",
+    "agentTools": "代理工具",
+    "agentSettings": "代理设置",
+    "deleteConfirm": "确定要删除代理 '{{name}}' 吗？",
+    "myAgents": "我的代理",
+    "customAgents": "自定义代理",
+    "defaultAgents": "默认代理",
+    "createCustomAgent": "创建自定义代理",
+    "noAgentsFound": "未找到代理",
+    "agentLimitReached": "您已达到最大代理数量限制"
+  },
+  "projects": {
+    "createProject": "创建项目",
+    "editProject": "编辑项目",
+    "deleteProject": "删除项目",
+    "projectName": "项目名称",
+    "projectDescription": "项目描述",
+    "deleteConfirm": "确定要删除项目 '{{name}}' 吗？",
+    "myProjects": "我的项目",
+    "noProjectsFound": "未找到项目"
+  },
+  "billing": {
+    "subscription": "订阅",
+    "usage": "使用情况",
+    "upgrade": "升级",
+    "downgrade": "降级",
+    "cancelSubscription": "取消订阅",
+    "paymentMethod": "支付方式",
+    "billingHistory": "账单历史",
+    "usageLimit": "使用限制",
+    "limitReached": "您已达到使用限制",
+    "upgradeToContinue": "升级您的计划以继续使用此功能",
+    "currentPlan": "当前计划",
+    "manageSubscription": "管理订阅"
+  },
+  "errors": {
+    "networkError": "网络错误",
+    "serverError": "服务器错误",
+    "unauthorized": "未授权",
+    "forbidden": "访问被禁止",
+    "notFound": "页面未找到",
+    "somethingWentWrong": "出现了问题",
+    "tryAgain": "请重试",
+    "contactSupport": "如果问题持续存在，请联系支持"
+  },
+  "examples": {
+    "research": "研究AI的最新发展并总结主要发现",
+    "analysis": "分析这个数据集并提供见解",
+    "automation": "帮我自动化我的日常工作流程",
+    "writing": "就这个主题写一封专业的邮件",
+    "coding": "帮我调试这个代码问题"
+  },
+  "modals": {
+    "agentRunLimit": {
+      "title": "代理运行限制",
+      "description": "您当前有 {{count}} 个代理在运行。请等待它们完成或停止一些代理后再开始新的任务。",
+      "viewRunning": "查看运行中的代理",
+      "close": "关闭"
+    },
+    "billing": {
+      "upgradeRequired": "需要升级",
+      "description": "您已达到使用限制。升级您的计划以继续使用所有功能。",
+      "upgradeNow": "立即升级",
+      "maybeLater": "稍后再说"
+    }
+  },
+  "releaseBadge": {
+    "new": "新功能",
+    "beta": "测试版",
+    "comingSoon": "即将推出"
+  },
+  "settings": {
+    "general": "通用",
+    "account": "账户",
+    "preferences": "偏好设置",
+    "notifications": "通知",
+    "privacy": "隐私",
+    "security": "安全",
+    "language": "语言",
+    "theme": "主题",
+    "timezone": "时区"
+  },
+  "share": {
+    "shareChat": "分享对话",
+    "publicAccessWarning": "此对话是公开的。任何拥有链接的人都可以查看此对话。",
+    "shareLink": "分享链接",
+    "copyLink": "复制链接",
+    "shareOnSocial": "分享到社交平台",
+    "removeLink": "移除链接",
+    "removing": "移除中...",
+    "shareThisChat": "分享此对话",
+    "createShareableLinkDescription": "创建一个可分享的链接，允许其他人公开查看此对话。",
+    "createShareableLink": "创建可分享链接",
+    "creating": "创建中...",
+    "linkCreatedSuccess": "可分享链接创建成功",
+    "linkCreateError": "创建可分享链接失败",
+    "linkRemovedSuccess": "可分享链接已移除",
+    "linkRemoveError": "移除可分享链接失败",
+    "linkCopiedSuccess": "链接已复制到剪贴板"
+  },
+  "deleteDialog": {
+    "title": "删除对话",
+    "confirmation": "确定要删除对话 \"{threadName}\" 吗？",
+    "warning": "此操作无法撤销。",
+    "deleting": "删除中..."
+  }
+}

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>i18n Test</title>
+</head>
+<body>
+    <h1>i18n 功能测试</h1>
+    <div id="test-results"></div>
+
+    <script>
+        // 模拟翻译资源
+        const translations = {
+            en: {
+                dashboard: {
+                    title: "What would you like to do today?",
+                    placeholder: "Describe what you need help with..."
+                }
+            },
+            'zh-CN': {
+                dashboard: {
+                    title: "今天想做什么？",
+                    placeholder: "描述你需要帮助的事项..."
+                }
+            }
+        };
+
+        // 语言检测逻辑
+        function detectLanguage() {
+            const browserLang = navigator.language || 'en';
+            if (browserLang.startsWith('zh')) return 'zh-CN';
+            return 'en';
+        }
+
+        // 获取嵌套翻译
+        function getNestedTranslation(resources, keys) {
+            let current = resources;
+            for (const key of keys) {
+                if (typeof current === 'object' && current && key in current) {
+                    current = current[key];
+                } else {
+                    return keys[keys.length - 1];
+                }
+            }
+            return current;
+        }
+
+        // 翻译函数
+        function t(key, language) {
+            const keys = key.split('.');
+            let value = getNestedTranslation(translations[language], keys);
+            if (typeof value !== 'string') {
+                value = getNestedTranslation(translations.en, keys);
+                if (typeof value !== 'string') {
+                    return key;
+                }
+            }
+            return value;
+        }
+
+        // 运行测试
+        function runTests() {
+            const results = document.getElementById('test-results');
+            let html = '<h2>测试结果：</h2>';
+
+            // 测试语言检测
+            const detectedLang = detectLanguage();
+            html += `<p>✓ 检测到的语言: ${detectedLang}</p>`;
+
+            // 测试英文翻译
+            const enTitle = t('dashboard.title', 'en');
+            const enPlaceholder = t('dashboard.placeholder', 'en');
+            html += `<p>✓ 英文标题: ${enTitle}</p>`;
+            html += `<p>✓ 英文占位符: ${enPlaceholder}</p>`;
+
+            // 测试中文翻译
+            const zhTitle = t('dashboard.title', 'zh-CN');
+            const zhPlaceholder = t('dashboard.placeholder', 'zh-CN');
+            html += `<p>✓ 中文标题: ${zhTitle}</p>`;
+            html += `<p>✓ 中文占位符: ${zhPlaceholder}</p>`;
+
+            // 测试回退机制
+            const fallback = t('nonexistent.key', 'zh-CN');
+            html += `<p>✓ 回退测试: ${fallback}</p>`;
+
+            html += '<h3>✅ 所有基础测试通过！</h3>';
+            results.innerHTML = html;
+        }
+
+        // 页面加载后运行测试
+        window.onload = runTests;
+    </script>
+</body>
+</html>

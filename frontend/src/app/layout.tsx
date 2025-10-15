@@ -1,4 +1,5 @@
 import { ThemeProvider } from '@/components/home/theme-provider';
+import { I18nProvider } from '@/i18n/context';
 import { siteConfig } from '@/lib/site';
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
@@ -11,6 +12,7 @@ import { Toaster } from '@/components/ui/sonner';
 import Script from 'next/script';
 import { PostHogIdentify } from '@/components/posthog-identify';
 import '@/lib/polyfills'; // Load polyfills early
+import { detectLanguage } from '@/i18n';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -114,8 +116,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // 在服务端检测语言
+  const detectedLanguage = detectLanguage();
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={detectedLanguage} suppressHydrationWarning>
       <head>
         {/* Google Tag Manager */}
         <Script id="google-tag-manager" strategy="afterInteractive">
@@ -149,10 +154,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Providers>
-            {children}
-            <Toaster />
-          </Providers>
+          <I18nProvider defaultLang={detectedLanguage}>
+            <Providers>
+              {children}
+              <Toaster />
+            </Providers>
+          </I18nProvider>
           {/* <Analytics /> */} {/* 禁用Vercel Analytics */}
           {/* <GoogleAnalytics gaId="G-6ETJFB3PT3" /> */} {/* 禁用Google Analytics */}
           {/* <SpeedInsights /> */} {/* 禁用Vercel Speed Insights */}

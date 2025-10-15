@@ -47,8 +47,10 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ThreadWithProject } from '@/hooks/react-query/sidebar/use-sidebar';
 import { processThreadsWithProjects, useDeleteMultipleThreads, useDeleteThread, useProjects, useThreads } from '@/hooks/react-query/sidebar/use-sidebar';
 import { projectKeys, threadKeys } from '@/hooks/react-query/sidebar/keys';
+import { useI18n } from '@/i18n/context';
 
 export function NavAgents() {
+  const { t } = useI18n();
   const { isMobile, state, setOpenMobile } = useSidebar()
   const [loadingThreadId, setLoadingThreadId] = useState<string | null>(null)
   const [showShareModal, setShowShareModal] = useState(false)
@@ -246,7 +248,7 @@ export function NavAgents() {
               onSuccess: () => {
                 // Invalidate queries to refresh the list
                 queryClient.invalidateQueries({ queryKey: threadKeys.lists() });
-                toast.success('Conversation deleted successfully');
+                toast.success(t('thread.deleteSuccess'));
               },
               onSettled: () => {
                 setThreadToDelete(null);
@@ -267,7 +269,7 @@ export function NavAgents() {
       const isActiveThreadIncluded = threadIdsToDelete.some(id => pathname?.includes(id));
 
       // Show initial toast
-      toast.info(`Deleting ${threadIdsToDelete.length} conversations...`);
+      toast.info(t('thread.deletingMultiple', { count: threadIdsToDelete.length }));
 
       try {
         // If the active thread is included, handle navigation first
@@ -300,11 +302,11 @@ export function NavAgents() {
               queryClient.invalidateQueries({ queryKey: threadKeys.lists() });
 
               // Show success message
-              toast.success(`Successfully deleted ${data.successful.length} conversations`);
+              toast.success(t('thread.deleteMultipleSuccess', { count: data.successful.length }));
 
               // If some deletions failed, show warning
               if (data.failed.length > 0) {
-                toast.warning(`Failed to delete ${data.failed.length} conversations`);
+                toast.warning(t('thread.deleteMultipleFailed', { count: data.failed.length }));
               }
 
               // Reset states
@@ -314,7 +316,7 @@ export function NavAgents() {
             },
             onError: (error) => {
               console.error('Error in bulk deletion:', error);
-              toast.error('Error deleting conversations');
+              toast.error(t('thread.deleteError'));
             },
             onSettled: () => {
               setThreadToDelete(null);
@@ -326,7 +328,7 @@ export function NavAgents() {
         );
       } catch (err) {
         console.error('Error initiating bulk deletion:', err);
-        toast.error('Error initiating deletion process');
+        toast.error(t('thread.deleteInitError'));
 
         // Reset states
         setSelectedThreads(new Set());
@@ -349,7 +351,7 @@ export function NavAgents() {
   return (
     <SidebarGroup>
       <div className="flex justify-between items-center">
-        <SidebarGroupLabel>Tasks</SidebarGroupLabel>
+        <SidebarGroupLabel>{t('navigation.tasks')}</SidebarGroupLabel>
         {(state !== 'collapsed' || isMobile) ? (
           <div className="flex items-center space-x-1">
             {selectedThreads.size > 0 ? (
@@ -463,7 +465,7 @@ export function NavAgents() {
                                 }}
                               >
                                 <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">More actions</span>
+                                <span className="sr-only">{t('common.moreActions')}</span>
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
@@ -476,7 +478,7 @@ export function NavAgents() {
                                 setShowShareModal(true)
                               }}>
                                 <Share2 className="text-muted-foreground" />
-                                <span>Share Chat</span>
+                                <span>{t('thread.shareChat')}</span>
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
                                 <a
@@ -485,7 +487,7 @@ export function NavAgents() {
                                   rel="noopener noreferrer"
                                 >
                                   <ArrowUpRight className="text-muted-foreground" />
-                                  <span>Open in New Tab</span>
+                                  <span>{t('common.openInNewTab')}</span>
                                 </a>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
@@ -498,7 +500,7 @@ export function NavAgents() {
                                 }
                               >
                                 <Trash2 className="text-muted-foreground" />
-                                <span>Delete</span>
+                                <span>{t('common.delete')}</span>
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -511,7 +513,7 @@ export function NavAgents() {
             ) : (
               <SidebarMenuItem>
                 <SidebarMenuButton className="text-sidebar-foreground/70">
-                  <span>No tasks yet</span>
+                  <span>{t('thread.noTasksYet')}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )}
@@ -522,7 +524,7 @@ export function NavAgents() {
       {(isDeletingSingle || isDeletingMultiple) && totalToDelete > 0 && (
         <div className="mt-2 px-2">
           <div className="text-xs text-muted-foreground mb-1">
-            Deleting {deleteProgress > 0 ? `(${Math.floor(deleteProgress)}%)` : '...'}
+            {t('thread.deleting', { progress: deleteProgress > 0 ? Math.floor(deleteProgress) : null })}
           </div>
           <div className="w-full bg-secondary h-1 rounded-full overflow-hidden">
             <div

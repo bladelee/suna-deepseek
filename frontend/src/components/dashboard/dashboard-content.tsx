@@ -31,10 +31,12 @@ import { useFeatureFlag } from '@/lib/feature-flags';
 import { CustomAgentsSection } from './custom-agents-section';
 import { toast } from 'sonner';
 import { ReleaseBadge } from '../auth/release-badge';
+import { useI18n } from '@/i18n/context';
 
 const PENDING_PROMPT_KEY = 'pendingAgentPrompt';
 
 export function DashboardContent() {
+  const { t } = useI18n();
   const [inputValue, setInputValue] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [autoSubmit, setAutoSubmit] = useState(false);
@@ -223,14 +225,14 @@ export function DashboardContent() {
           <div className="min-h-full flex flex-col">
             {customAgentsEnabled && (
               <div className="flex justify-center px-4 pt-4 md:pt-8">
-                <ReleaseBadge text="Custom Agents, Playbooks, and more!" link="/agents?tab=my-agents" />
+                <ReleaseBadge text={t('dashboard.customAgents.title')} link={t('dashboard.customAgents.link')} />
               </div>
             )}
             <div className="flex-1 flex items-center justify-center px-4 py-8">
               <div className="w-full max-w-[650px] flex flex-col items-center justify-center space-y-4 md:space-y-6">
                 <div className="flex flex-col items-center text-center w-full">
                   <p className="tracking-tight text-2xl md:text-3xl font-normal text-foreground/90">
-                    What would you like to do today?
+                    {t('dashboard.title')}
                   </p>
                 </div>
                 <div className="w-full">
@@ -238,7 +240,7 @@ export function DashboardContent() {
                     ref={chatInputRef}
                     onSubmit={handleSubmit}
                     loading={isSubmitting}
-                    placeholder="Describe what you need help with..."
+                    placeholder={t('dashboard.placeholder')}
                     value={inputValue}
                     onChange={setInputValue}
                     hideAttachments={false}

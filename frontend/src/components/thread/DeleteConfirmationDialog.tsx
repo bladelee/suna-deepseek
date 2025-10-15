@@ -13,6 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useI18n } from '@/i18n/context';
 
 interface DeleteConfirmationDialogProps {
   isOpen: boolean;
@@ -32,6 +33,8 @@ export function DeleteConfirmationDialog({
   threadName,
   isDeleting,
 }: DeleteConfirmationDialogProps) {
+  const { t } = useI18n();
+
   // Reset pointer events when dialog opens
   useEffect(() => {
     if (isOpen) {
@@ -43,16 +46,15 @@ export function DeleteConfirmationDialog({
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete conversation</AlertDialogTitle>
+          <AlertDialogTitle>{t('deleteDialog.title')}</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete the conversation{' '}
-            <span className="font-semibold">"{threadName}"</span>?
+            {t('deleteDialog.confirmation', { threadName })}
             <br />
-            This action cannot be undone.
+            {t('deleteDialog.warning')}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>{t('common.cancel')}</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
@@ -64,10 +66,10 @@ export function DeleteConfirmationDialog({
             {isDeleting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Deleting...
+                {t('deleteDialog.deleting')}
               </>
             ) : (
-              'Delete'
+              t('common.delete')
             )}
           </AlertDialogAction>
         </AlertDialogFooter>

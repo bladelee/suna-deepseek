@@ -1,0 +1,58 @@
+{
+  "en": {
+    "menu": {
+      "file": "File",
+      "edit": "Edit",
+      "view": "View",
+      "window": "Window",
+      "help": "Help",
+      "quit": "Quit",
+      "about": "About Kortix",
+      "preferences": "Preferences...",
+      "services": "Services",
+      "hide": "Hide Kortix",
+      "hideOthers": "Hide Others",
+      "showAll": "Show All"
+    },
+    "dialog": {
+      "confirmExit": "Are you sure you want to exit?",
+      "unsavedChanges": "You have unsaved changes. Do you want to continue?",
+      "confirmDelete": "Are you sure you want to delete this item?",
+      "operationSuccess": "Operation completed successfully",
+      "operationFailed": "Operation failed"
+    },
+    "notification": {
+      "updateAvailable": "A new version is available",
+      "updateDownloaded": "Update downloaded, restart to apply",
+      "updateError": "Update download failed"
+    }
+  },
+  "zhCN": {
+    "menu": {
+      "file": "文件",
+      "edit": "编辑",
+      "view": "视图",
+      "window": "窗口",
+      "help": "帮助",
+      "quit": "退出",
+      "about": "关于 Kortix",
+      "preferences": "偏好设置...",
+      "services": "服务",
+      "hide": "隐藏 Kortix",
+      "hideOthers": "隐藏其他",
+      "showAll": "显示全部"
+    },
+    "dialog": {
+      "confirmExit": "确定要退出吗？",
+      "unsavedChanges": "您有未保存的更改，要继续吗？",
+      "confirmDelete": "确定要删除此项目吗？",
+      "operationSuccess": "操作完成",
+      "operationFailed": "操作失败"
+    },
+    "notification": {
+      "updateAvailable": "新版本可用",
+      "updateDownloaded": "更新已下载，重启以应用",
+      "updateError": "更新下载失败"
+    }
+  }
+}

@@ -1,0 +1,221 @@
+{
+  "dashboard": {
+    "title": "What would you like to do today?",
+    "placeholder": "Describe what you need help with...",
+    "examples": {
+      "research": "Research a topic",
+      "analysis": "Analyze data",
+      "automation": "Automate a task",
+      "writing": "Write content",
+      "coding": "Write or debug code"
+    },
+    "customAgents": {
+      "title": "Custom Agents, Playbooks, and more!",
+      "link": "/agents?tab=my-agents"
+    }
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "remove": "Remove",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Information",
+    "retry": "Retry",
+    "close": "Close",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "clear": "Clear",
+    "refresh": "Refresh",
+    "copy": "Copy",
+    "share": "Share",
+    "download": "Download",
+    "upload": "Upload",
+    "settings": "Settings",
+    "help": "Help",
+    "about": "About",
+    "moreActions": "More actions",
+    "openInNewTab": "Open in New Tab"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "agents": "Agents",
+    "playbooks": "Playbooks",
+    "projects": "Projects",
+    "settings": "Settings",
+    "billing": "Billing",
+    "account": "Account",
+    "help": "Help",
+    "logout": "Log Out",
+    "newThread": "New Thread",
+    "tasks": "Tasks"
+  },
+  "auth": {
+    "login": "Log In",
+    "logout": "Log Out",
+    "signup": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "rememberMe": "Remember me",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "createAccount": "Create Account"
+  },
+  "forms": {
+    "required": "This field is required",
+    "invalidEmail": "Please enter a valid email address",
+    "passwordTooShort": "Password must be at least {{minLength}} characters",
+    "passwordsNotMatch": "Passwords do not match",
+    "genericError": "An error occurred. Please try again."
+  },
+  "thread": {
+    "newThread": "New Thread",
+    "sendMessage": "Send Message",
+    "attachFiles": "Attach Files",
+    "voiceInput": "Voice Input",
+    "stopGenerating": "Stop Generating",
+    "regenerate": "Regenerate",
+    "copy": "Copy",
+    "share": "Share",
+    "shareChat": "Share Chat",
+    "delete": "Delete",
+    "retry": "Retry",
+    "thinking": "Thinking...",
+    "typing": "Typing...",
+    "you": "You",
+    "agent": "Agent",
+    "noTasksYet": "No tasks yet",
+    "deleteSuccess": "Conversation deleted successfully",
+    "deleteError": "Error deleting conversations",
+    "deleteInitError": "Error initiating deletion process",
+    "deleting": "Deleting{{progress, percent}}",
+    "deletingMultiple": "Deleting {{count}} conversations...",
+    "deleteMultipleSuccess": "Successfully deleted {{count}} conversations",
+    "deleteMultipleFailed": "Failed to delete {{count}} conversations"
+  },
+  "agents": {
+    "createAgent": "Create Agent",
+    "editAgent": "Edit Agent",
+    "deleteAgent": "Delete Agent",
+    "agentName": "Agent Name",
+    "agentDescription": "Agent Description",
+    "agentModel": "Agent Model",
+    "agentTools": "Agent Tools",
+    "agentSettings": "Agent Settings",
+    "deleteConfirm": "Are you sure you want to delete agent '{{name}}'?",
+    "myAgents": "My Agents",
+    "customAgents": "Custom Agents",
+    "defaultAgents": "Default Agents",
+    "createCustomAgent": "Create Custom Agent",
+    "noAgentsFound": "No agents found",
+    "agentLimitReached": "You have reached the maximum number of agents"
+  },
+  "projects": {
+    "createProject": "Create Project",
+    "editProject": "Edit Project",
+    "deleteProject": "Delete Project",
+    "projectName": "Project Name",
+    "projectDescription": "Project Description",
+    "deleteConfirm": "Are you sure you want to delete project '{{name}}'?",
+    "myProjects": "My Projects",
+    "noProjectsFound": "No projects found"
+  },
+  "billing": {
+    "subscription": "Subscription",
+    "usage": "Usage",
+    "upgrade": "Upgrade",
+    "downgrade": "Downgrade",
+    "cancelSubscription": "Cancel Subscription",
+    "paymentMethod": "Payment Method",
+    "billingHistory": "Billing History",
+    "usageLimit": "Usage Limit",
+    "limitReached": "You have reached your usage limit",
+    "upgradeToContinue": "Upgrade your plan to continue using this feature",
+    "currentPlan": "Current Plan",
+    "manageSubscription": "Manage Subscription"
+  },
+  "errors": {
+    "networkError": "Network error occurred",
+    "serverError": "Server error occurred",
+    "unauthorized": "You are not authorized",
+    "forbidden": "Access forbidden",
+    "notFound": "Page not found",
+    "somethingWentWrong": "Something went wrong",
+    "tryAgain": "Please try again",
+    "contactSupport": "Contact support if the problem persists"
+  },
+  "examples": {
+    "research": "Research recent developments in AI and summarize the key findings",
+    "analysis": "Analyze this dataset and provide insights",
+    "automation": "Help me automate my daily workflow",
+    "writing": "Write a professional email about this topic",
+    "coding": "Help me debug this code issue"
+  },
+  "modals": {
+    "agentRunLimit": {
+      "title": "Agent Run Limit Reached",
+      "description": "You have {{count}} agent(s) currently running. Please wait for them to complete or stop some agents before starting a new one.",
+      "viewRunning": "View Running Agents",
+      "close": "Close"
+    },
+    "billing": {
+      "upgradeRequired": "Upgrade Required",
+      "description": "You've reached your usage limit. Upgrade your plan to continue using all features.",
+      "upgradeNow": "Upgrade Now",
+      "maybeLater": "Maybe Later"
+    }
+  },
+  "releaseBadge": {
+    "new": "New",
+    "beta": "Beta",
+    "comingSoon": "Coming Soon"
+  },
+  "settings": {
+    "general": "General",
+    "account": "Account",
+    "preferences": "Preferences",
+    "notifications": "Notifications",
+    "privacy": "Privacy",
+    "security": "Security",
+    "language": "Language",
+    "theme": "Theme",
+    "timezone": "Timezone"
+  },
+  "share": {
+    "shareChat": "Share Chat",
+    "publicAccessWarning": "This chat is publicly accessible. Anyone with the link can view this conversation.",
+    "shareLink": "Share link",
+    "copyLink": "Copy link",
+    "shareOnSocial": "Share on social",
+    "removeLink": "Remove link",
+    "removing": "Removing...",
+    "shareThisChat": "Share this chat",
+    "createShareableLinkDescription": "Create a shareable link that allows others to view this conversation publicly.",
+    "createShareableLink": "Create shareable link",
+    "creating": "Creating...",
+    "linkCreatedSuccess": "Shareable link created successfully",
+    "linkCreateError": "Failed to create shareable link",
+    "linkRemovedSuccess": "Shareable link removed",
+    "linkRemoveError": "Failed to remove shareable link",
+    "linkCopiedSuccess": "Link copied to clipboard"
+  },
+  "deleteDialog": {
+    "title": "Delete conversation",
+    "confirmation": "Are you sure you want to delete the conversation \"{threadName}\"?",
+    "warning": "This action cannot be undone.",
+    "deleting": "Deleting..."
+  }
+}

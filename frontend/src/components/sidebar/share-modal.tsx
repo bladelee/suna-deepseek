@@ -11,6 +11,7 @@ import { toast } from "sonner"
 import { useThreadQuery, useUpdateThreadMutation, useUpdateProject } from "@/hooks/react-query"
 import type { JSX } from "react"
 import { Skeleton } from "../ui/skeleton"
+import { useI18n } from "@/i18n/context"
 
 interface SocialShareOption {
   name: string
@@ -57,6 +58,7 @@ const ShareModalSkeleton = () => {
 }
 
 export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalProps) {
+  const { t } = useI18n()
   const [shareLink, setShareLink] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isCopying, setIsCopying] = useState(false)
@@ -95,10 +97,10 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
       await updatePublicStatus(true)
       const generatedLink = generateShareLink()
       setShareLink(generatedLink)
-      toast.success("Shareable link created successfully")
+      toast.success(t('share.linkCreatedSuccess'))
     } catch (error) {
       console.error("Error creating share link:", error)
-      toast.error("Failed to create shareable link")
+      toast.error(t('share.linkCreateError'))
     } finally {
       setIsLoading(false)
     }
@@ -112,10 +114,10 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
     try {
       await updatePublicStatus(false)
       setShareLink(null)
-      toast.success("Shareable link removed")
+      toast.success(t('share.linkRemovedSuccess'))
     } catch (error) {
       console.error("Error removing share link:", error)
-      toast.error("Failed to remove shareable link")
+      toast.error(t('share.linkRemoveError'))
     } finally {
       setIsLoading(false)
     }
@@ -138,7 +140,7 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
     if (shareLink) {
       setIsCopying(true)
       navigator.clipboard.writeText(shareLink)
-      toast.success("Link copied to clipboard")
+      toast.success(t('share.linkCopiedSuccess'))
       setTimeout(() => {
         setIsCopying(false)
       }, 500)
@@ -192,7 +194,7 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Share2 className="h-5 w-5" />
-            Share Chat
+            {t('share.shareChat')}
           </DialogTitle>
         </DialogHeader>
 
@@ -204,23 +206,23 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
               <Alert>
                 <Globe className="h-4 w-4" />
                 <AlertDescription>
-                  This chat is publicly accessible. Anyone with the link can view this conversation.
+                  {t('share.publicAccessWarning')}
                 </AlertDescription>
               </Alert>
 
               <div className="space-y-2">
-                <Label htmlFor="share-link">Share link</Label>
+                <Label htmlFor="share-link">{t('share.shareLink')}</Label>
                 <div className="flex space-x-2">
                   <Input id="share-link" value={shareLink} readOnly className="font-mono text-sm" />
                   <Button variant="outline" size="icon" onClick={copyToClipboard} disabled={isCopying}>
                     {isCopying ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    <span className="sr-only">Copy link</span>
+                    <span className="sr-only">{t('share.copyLink')}</span>
                   </Button>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <Label>Share on social</Label>
+                <Label>{t('share.shareOnSocial')}</Label>
                 <div className="flex space-x-2">
                   {socialOptions.map((option, index) => (
                     <Button
@@ -243,7 +245,7 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
                 disabled={isLoading}
               >
                 <Link2Off className="h-4 w-4" />
-                {isLoading ? "Removing..." : "Remove link"}
+                {isLoading ? t('share.removing') : t('share.removeLink')}
               </Button>
             </>
           ) : (
@@ -252,21 +254,21 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
                 <Share2 className="h-6 w-6" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-semibold">Share this chat</h3>
+                <h3 className="text-xl font-semibold">{t('share.shareThisChat')}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Create a shareable link that allows others to view this conversation publicly.
+                  {t('share.createShareableLinkDescription')}
                 </p>
               </div>
               <Button onClick={createShareLink} disabled={isLoading} className="w-full">
                 {isLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Creating...
+                    {t('share.creating')}
                   </>
                 ) : (
                   <>
                     <Link className="h-4 w-4" />
-                    Create shareable link
+                    {t('share.createShareableLink')}
                   </>
                 )}
               </Button>
