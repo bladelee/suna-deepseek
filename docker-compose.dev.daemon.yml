@@ -27,10 +27,24 @@ services:
     volumes:
       - ./backend/.env:/app/.env
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # 开发环境：挂载本地daemon二进制文件，支持热更新
-      - ./backend/sandbox/daemon-proxy/daytona-daemon-static:/app/daemon-proxy/daytona-daemon-static:ro
-      # 开发环境：挂载源代码，支持热重载
-      - ./backend:/app:ro
+      # 开发环境：选择性挂载源代码，支持热重载
+      - ./backend/api.py:/app/api.py:ro
+      - ./backend/sandbox:/app/sandbox:ro
+      - ./backend/services:/app/services:ro
+      - ./backend/agent:/app/agent:ro
+      - ./backend/utils:/app/utils:ro
+      - ./backend/tasks:/app/tasks:ro
+      - ./backend/triggers:/app/triggers:ro
+      - ./backend/flags:/app/flags:ro
+      - ./backend/credentials:/app/credentials:ro
+      - ./backend/templates:/app/templates:ro
+      - ./backend/mcp_module:/app/mcp_module:ro
+      - ./backend/knowledge_base:/app/knowledge_base:ro
+      - ./backend/pipedream:/app/pipedream:ro
+      - ./backend/admin:/app/admin:ro
+      - ./backend/composio_integration:/app/composio_integration:ro
+      - ./backend/supabase:/app/supabase:ro
+      - ./backend/scripts:/app/scripts:ro
     env_file:
       - ./backend/.env
     environment:
@@ -53,6 +67,10 @@ services:
       - SECURITY_ENABLED=false
       # 开发环境资源配置
       - WORKERS=1
+      # 开发环境特有配置
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - RELOAD=true
       - THREADS=1
       - WORKER_CONNECTIONS=1000
     depends_on:
@@ -90,10 +108,24 @@ services:
     volumes:
       - ./backend/.env:/app/.env:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # 开发环境：挂载本地daemon二进制文件，支持热更新
-      - ./backend/sandbox/daemon-proxy/daytona-daemon-static:/app/daemon-proxy/daytona-daemon-static:ro
-      # 开发环境：挂载源代码，支持热重载
-      - ./backend:/app:ro
+      # 开发环境：选择性挂载源代码，支持热重载
+      - ./backend/api.py:/app/api.py:ro
+      - ./backend/sandbox:/app/sandbox:ro
+      - ./backend/services:/app/services:ro
+      - ./backend/agent:/app/agent:ro
+      - ./backend/utils:/app/utils:ro
+      - ./backend/tasks:/app/tasks:ro
+      - ./backend/triggers:/app/triggers:ro
+      - ./backend/flags:/app/flags:ro
+      - ./backend/credentials:/app/credentials:ro
+      - ./backend/templates:/app/templates:ro
+      - ./backend/mcp_module:/app/mcp_module:ro
+      - ./backend/knowledge_base:/app/knowledge_base:ro
+      - ./backend/pipedream:/app/pipedream:ro
+      - ./backend/admin:/app/admin:ro
+      - ./backend/composio_integration:/app/composio_integration:ro
+      - ./backend/supabase:/app/supabase:ro
+      - ./backend/scripts:/app/scripts:ro
     dns:
       - 8.8.8.8        # 谷歌公共 DNS
       - 114.114.114.114  # 国内公共 DNS
