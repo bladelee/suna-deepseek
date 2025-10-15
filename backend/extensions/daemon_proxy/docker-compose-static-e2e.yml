@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  daemon-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    ports:
+      - "8080:8080"
+    environment:
+      - DAEMON_MODE=docker
+      - DAEMON_PORT=2280
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8080
+      - DAEMON_PATH=/usr/local/bin/daytona
+      - DAEMON_BINARY_SOURCE_PATH=./tests/e2e/bin/daytona-daemon-static
+      - DAEMON_INJECTION_MODE=volume
+      - DAEMON_CONTAINER_NAME=static-website-simple
+    command: ["python", "main.py", "--host", "0.0.0.0", "--port", "8080"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - static-website-simple
+    networks:
+      - e2e-network
+
+  # 简单静态网站服务（将被注入 daytona-daemon）
+  static-website-simple:
+    image: nginx:alpine
+    container_name: static-website-simple
+    # 不暴露外部端口，只通过注入的 daemon 访问
+    volumes:
+      - ./tests/e2e/test-websites/simple-html:/usr/share/nginx/html:ro
+    networks:
+      - e2e-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # 完整静态网站服务（将被注入 daytona-daemon）
+  static-website-complete:
+    image: nginx:alpine
+    container_name: static-website-complete
+    # 不暴露外部端口，只通过注入的 daemon 访问
+    volumes:
+      - ./tests/e2e/test-websites/complete-website:/usr/share/nginx/html:ro
+    networks:
+      - e2e-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Mock 服务用于测试（保持兼容性）
+  vnc-service:
+    image: python:3.9-slim
+    command: ["sh", "-c", "pip install aiohttp && python3 -c 'import asyncio; import aiohttp; from aiohttp import web; async def handler(request): return web.json_response({\"service\": \"VNC\", \"port\": 6080, \"status\": \"running\"}); app = web.Application(); app.router.add_route(\"*\", \"/{path:.*}\", handler); async def init(): runner = web.AppRunner(app); await runner.setup(); site = web.TCPSite(runner, \"0.0.0.0\", 6080); await site.start(); print(\"Mock VNC service started\"); await asyncio.Future(); asyncio.run(init())'"]
+    ports:
+      - "6080:6080"
+    networks:
+      - e2e-network
+
+  web-service:
+    image: python:3.9-slim
+    command: ["sh", "-c", "pip install aiohttp && python3 -c 'import asyncio; import aiohttp; from aiohttp import web; async def handler(request): return web.json_response({\"service\": \"Web\", \"port\": 8080, \"status\": \"running\"}); app = web.Application(); app.router.add_route(\"*\", \"/{path:.*}\", handler); async def init(): runner = web.AppRunner(app); await runner.setup(); site = web.TCPSite(runner, \"0.0.0.0\", 8080); await site.start(); print(\"Mock Web service started\"); await asyncio.Future(); asyncio.run(init())'"]
+    ports:
+      - "8081:8080"
+    networks:
+      - e2e-network
+
+networks:
+  e2e-network:
+    driver: bridge
+
+volumes:
+  daytona-data:

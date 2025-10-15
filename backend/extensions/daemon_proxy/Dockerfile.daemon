@@ -1,0 +1,42 @@
+# Dockerfile for building daytona daemon for E2E testing
+# 使用预编译的 daemon 二进制文件
+
+FROM alpine:3.18
+
+# 安装必要的运行时依赖
+RUN apk add --no-cache \
+    ca-certificates \
+    tzdata \
+    wget \
+    libc6-compat \
+    && rm -rf /var/cache/apk/*
+
+# 创建非 root 用户
+RUN addgroup -g 1000 daytona && \
+    adduser -D -s /bin/sh -u 1000 -G daytona daytona
+
+# 复制预编译的 daemon 二进制文件
+COPY tests/e2e/bin/daytona-daemon /usr/local/bin/daytona-daemon
+
+# 设置权限
+RUN chmod +x /usr/local/bin/daytona-daemon
+
+# 创建数据目录
+RUN mkdir -p /var/lib/daytona && \
+    chown -R daytona:daytona /var/lib/daytona
+
+# 切换到非 root 用户
+USER daytona
+
+# 设置工作目录
+WORKDIR /var/lib/daytona
+
+# 暴露端口
+EXPOSE 2280
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 -qO- http://localhost:2280/version | grep -q version || exit 1
+
+# 启动命令
+CMD ["/usr/local/bin/daytona-daemon"]

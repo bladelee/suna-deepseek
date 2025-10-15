@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from utils.logger import logger
 from utils.config import config
 from utils.config import Configuration
-from typing import Union
+from typing import Union, Optional, Dict, Any
 
 load_dotenv()
 
@@ -280,3 +280,136 @@ def get_available_sandbox_providers() -> list:
         providers.append("docker")
     
     return providers
+
+
+# Docker Sandbox Daemon Proxy Integration Functions
+
+async def get_docker_sandbox_with_daemon_proxy(
+    container_id: str, 
+    daemon_proxy_config: Optional[Dict[str, Any]] = None
+) -> Optional['DockerSandboxWithDaemonProxy']:
+    """
+    Get a Docker sandbox with integrated daemon proxy functionality
+    
+    Args:
+        container_id: The Docker container ID
+        daemon_proxy_config: Optional daemon proxy configuration
+        
+    Returns:
+        DockerSandboxWithDaemonProxy instance or None if failed
+    """
+    try:
+        from .daemon_proxy_integration import create_docker_sandbox_with_daemon_proxy
+        return await create_docker_sandbox_with_daemon_proxy(container_id, daemon_proxy_config)
+    except Exception as e:
+        logger.error(f"Failed to get Docker sandbox with daemon proxy: {e}")
+        return None
+
+
+async def get_preview_link_for_docker_sandbox(
+    container_id: str, 
+    port: int, 
+    daemon_proxy_config: Optional[Dict[str, Any]] = None
+) -> Optional[Dict[str, Any]]:
+    """
+    Get a preview link for a specific port in a Docker sandbox
+    
+    Args:
+        container_id: The Docker container ID
+        port: The port to create preview link for
+        daemon_proxy_config: Optional daemon proxy configuration
+        
+    Returns:
+        Preview link information or None if failed
+    """
+    try:
+        import aiohttp
+        from utils.config import config
+        
+        # Get backend URL from config
+        backend_url = getattr(config, 'BACKEND_URL', 'http://localhost:8001/api')
+        
+        async with aiohttp.ClientSession() as session:
+            # First, ensure daemon is injected into this container
+            inject_url = f"{backend_url}/daemon-proxy/container/{container_id}/inject"
+            async with session.post(inject_url, json=daemon_proxy_config) as response:
+                if response.status not in [200, 409]:  # 409 = already injected
+                    logger.warning(f"Failed to inject daemon into container {container_id}")
+                    return None
+            
+            # Create preview link
+            preview_url = f"{backend_url}/daemon-proxy/container/{container_id}/preview/{port}"
+            async with session.post(preview_url) as response:
+                if response.status == 200:
+                    return await response.json()
+                else:
+                    logger.warning(f"Failed to create preview link: {response.status}")
+                    return None
+        
+    except Exception as e:
+        logger.error(f"Failed to get preview link for Docker sandbox {container_id}, port {port}: {e}")
+        return None
+
+
+async def get_vnc_preview_link_for_docker_sandbox(
+    container_id: str, 
+    daemon_proxy_config: Optional[Dict[str, Any]] = None
+) -> Optional[Dict[str, Any]]:
+    """
+    Get VNC preview link for a Docker sandbox (port 6080)
+    
+    Args:
+        container_id: The Docker container ID
+        daemon_proxy_config: Optional daemon proxy configuration
+        
+    Returns:
+        VNC preview link information or None if failed
+    """
+    return await get_preview_link_for_docker_sandbox(container_id, 6080, daemon_proxy_config)
+
+
+async def get_website_preview_link_for_docker_sandbox(
+    container_id: str, 
+    port: int = 8080,
+    daemon_proxy_config: Optional[Dict[str, Any]] = None
+) -> Optional[Dict[str, Any]]:
+    """
+    Get website preview link for a Docker sandbox
+    
+    Args:
+        container_id: The Docker container ID
+        port: The website port (default: 8080)
+        daemon_proxy_config: Optional daemon proxy configuration
+        
+    Returns:
+        Website preview link information or None if failed
+    """
+    return await get_preview_link_for_docker_sandbox(container_id, port, daemon_proxy_config)
+
+
+async def revoke_preview_link_for_docker_sandbox(
+    container_id: str, 
+    token: str,
+    daemon_proxy_config: Optional[Dict[str, Any]] = None
+) -> bool:
+    """
+    Revoke a preview link for a Docker sandbox
+    
+    Args:
+        container_id: The Docker container ID
+        token: The preview link token to revoke
+        daemon_proxy_config: Optional daemon proxy configuration
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        sandbox_with_proxy = await get_docker_sandbox_with_daemon_proxy(container_id, daemon_proxy_config)
+        if not sandbox_with_proxy:
+            return False
+        
+        return await sandbox_with_proxy.revoke_preview_link(token)
+        
+    except Exception as e:
+        logger.error(f"Failed to revoke preview link for Docker sandbox {container_id}, token {token}: {e}")
+        return False

@@ -1,0 +1,42 @@
+# Daemon Proxy Service Configuration
+
+# 服务器配置
+server:
+  host: "0.0.0.0"
+  port: 8080
+
+# Daemon配置
+daemon:
+  mode: "host"  # "host" 或 "docker"
+  port: 2280
+  path: "/usr/local/bin/daytona"  # 仅host模式需要
+  container_name: "my-sandbox"    # 仅docker模式需要
+  startup_timeout: 30  # daemon启动超时时间（秒）
+  binary_source_path: "/usr/local/bin/daytona"  # 注入模式下的二进制源文件路径
+  injection_mode: "volume"  # "volume" 或 "direct"，仅docker模式有效
+
+# 安全配置
+security:
+  enabled: false
+  api_key: "your-secret-key"
+
+# 日志配置
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/daemon-proxy.log"
+  max_size: 10485760  # 10MB
+  backup_count: 5
+
+# 代理配置
+proxy:
+  timeout: 30  # 代理请求超时时间（秒）
+  max_retries: 3  # 最大重试次数
+  retry_delay: 1  # 重试延迟（秒）
+
+# 监控配置
+monitoring:
+  enabled: true
+  metrics_port: 9090
+  health_check_interval: 30  # 健康检查间隔（秒）
+

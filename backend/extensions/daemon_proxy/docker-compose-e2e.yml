@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  daemon-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    ports:
+      - "8080:8080"
+    environment:
+      - DAEMON_MODE=docker
+      - DAEMON_CONTAINER_NAME=daytona-daemon
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8080
+    depends_on:
+      daytona-daemon:
+        condition: service_healthy
+    networks:
+      - e2e-network
+
+  daytona-daemon:
+    build:
+      context: .
+      dockerfile: Dockerfile.daemon
+    ports:
+      - "2280:2280"
+    environment:
+      - TZ=UTC
+    volumes:
+      - daytona-data:/var/lib/daytona
+    networks:
+      - e2e-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:2280/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Mock 服务用于测试
+  vnc-service:
+    image: python:3.9-slim
+    command: ["sh", "-c", "pip install aiohttp && python3 -c 'import asyncio; import aiohttp; from aiohttp import web; async def handler(request): return web.json_response({\"service\": \"VNC\", \"port\": 6080, \"status\": \"running\"}); app = web.Application(); app.router.add_route(\"*\", \"/{path:.*}\", handler); async def init(): runner = web.AppRunner(app); await runner.setup(); site = web.TCPSite(runner, \"0.0.0.0\", 6080); await site.start(); print(\"Mock VNC service started\"); await asyncio.Future(); asyncio.run(init())'"]
+    ports:
+      - "6080:6080"
+    networks:
+      - e2e-network
+
+  web-service:
+    image: python:3.9-slim
+    command: ["sh", "-c", "pip install aiohttp && python3 -c 'import asyncio; import aiohttp; from aiohttp import web; async def handler(request): return web.json_response({\"service\": \"Web\", \"port\": 8080, \"status\": \"running\"}); app = web.Application(); app.router.add_route(\"*\", \"/{path:.*}\", handler); async def init(): runner = web.AppRunner(app); await runner.setup(); site = web.TCPSite(runner, \"0.0.0.0\", 8080); await site.start(); print(\"Mock Web service started\"); await asyncio.Future(); asyncio.run(init())'"]
+    ports:
+      - "8081:8080"
+    networks:
+      - e2e-network
+
+networks:
+  e2e-network:
+    driver: bridge
+
+volumes:
+  daytona-data:

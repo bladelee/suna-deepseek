@@ -89,22 +89,142 @@ class DockerSandbox:
             self._fs_instance = DockerSandboxFS(self)
         return self._fs_instance
     
+    
     async def get_preview_link(self, port: int):
-        """Get a preview link for the specified port.
+        """Get a preview link for the specified port using integrated daemon-proxy.
         
-        For Docker sandboxes, this returns a mock preview link object
-        that can be used by tools expecting this interface.
+        For Docker sandboxes, this uses the integrated daemon-proxy API to create a real preview link
+        that can be used to access services running in the container.
         """
+        try:
+            # Use the integrated daemon-proxy API
+            preview_link = await self._get_preview_link_via_api(port)
+            
+            if preview_link:
+                logger.info(f"Created daemon-proxy preview link for port {port}: {preview_link.url}")
+                return preview_link
+            else:
+                logger.warning(f"Failed to create daemon-proxy preview link for port {port}, falling back to mock preview link")
+                return self._create_mock_preview_link(port)
+                
+        except Exception as e:
+            logger.error(f"Error creating daemon-proxy preview link for port {port}: {e}")
+            logger.info(f"Falling back to mock preview link for port {port}")
+            return self._create_mock_preview_link(port)
+    
+    async def _get_preview_link_via_api(self, port: int):
+        """Get preview link via the integrated daemon-proxy API"""
+        try:
+            import aiohttp
+            from utils.config import config
+            
+            # Get backend URL from config
+            backend_url = getattr(config, 'BACKEND_URL', 'http://localhost:8001/api')
+            
+            async with aiohttp.ClientSession() as session:
+                # First, ensure daemon is injected into this container
+                inject_url = f"{backend_url}/daemon-proxy/container/{self.container_id}/inject"
+                async with session.post(inject_url) as response:
+                    if response.status not in [200, 409]:  # 409 = already injected
+                        logger.warning(f"Failed to inject daemon into container {self.container_id}")
+                        return None
+                
+                # Create preview link
+                preview_url = f"{backend_url}/daemon-proxy/container/{self.container_id}/preview/{port}"
+                async with session.post(preview_url) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        
+                        # Create a preview link object
+                        class PreviewLink:
+                            def __init__(self, data):
+                                self.url = data['url']
+                                self.token = data['token']
+                                self.port = data['port']
+                                self.expires_at = data['expires_at']
+                        
+                        return PreviewLink(data)
+                    else:
+                        logger.warning(f"Failed to create preview link: {response.status}")
+                        return None
+                        
+        except Exception as e:
+            logger.error(f"Error calling daemon-proxy API: {e}")
+            return None
+    
+    def _create_mock_preview_link(self, port: int):
+        """Create a mock preview link as fallback."""
         class MockPreviewLink:
             def __init__(self, port: int):
                 self.port = port
                 self.url = f"http://localhost:{port}"
                 self.token = None
+                self.expires_at = None
             
             def __str__(self):
                 return f"MockPreviewLink(url='{self.url}', token='{self.token}')"
         
         return MockPreviewLink(port)
+    
+    
+    async def inject_daytona_daemon(self, binary_source_path: str = None, injection_method: str = None) -> bool:
+        """Inject and start daytona daemon in this container using existing daemon-proxy functionality."""
+        try:
+            from backend.extensions.daemon_proxy.daemon_proxy import DaemonManager, Config
+            
+            # Use provided binary path or default
+            binary_path = binary_source_path or os.getenv('DAEMON_BINARY_PATH', '/app/daemon-proxy/daytona-daemon-static')
+            
+            # Use provided injection method or default from environment
+            method = injection_method or os.getenv('DAEMON_INJECTION_METHOD', 'copy')
+            
+            # Create daemon manager with Docker injection mode
+            daemon_config = Config()
+            daemon_config.set("daemon.mode", "docker")
+            daemon_config.set("daemon.port", 2080)
+            daemon_config.set("daemon.container_name", self.container_id)
+            daemon_config.set("daemon.injection_mode", "volume")
+            daemon_config.set("daemon.injection_method", method)  # 使用配置的注入方式
+            daemon_config.set("daemon.binary_source_path", binary_path)
+            daemon_config.set("daemon.startup_timeout", 30)
+            
+            daemon_manager = DaemonManager(daemon_config)
+            await daemon_manager.start()
+            
+            logger.info(f"Successfully injected daytona daemon into container {self.container_id} using {method} method")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error injecting daytona daemon: {e}")
+            return False
+    
+    async def stop_daytona_daemon(self) -> bool:
+        """Stop daytona daemon in this container."""
+        try:
+            container = self.container
+            # Use pkill to stop daytona daemon processes
+            result = container.exec_run(['sh', '-c', 'pkill -f "daytona"'])
+            
+            if result.exit_code == 0:
+                logger.info(f"Successfully stopped daytona daemon in container {self.container_id}")
+                return True
+            else:
+                logger.warning(f"Failed to stop daytona daemon: {result.output.decode()}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error stopping daytona daemon: {e}")
+            return False
+    
+    async def is_daytona_daemon_running(self) -> bool:
+        """Check if daytona daemon is running in this container."""
+        try:
+            container = self.container
+            result = container.exec_run(['sh', '-c', 'pgrep -f "daytona"'])
+            return result.exit_code == 0
+        except Exception as e:
+            logger.error(f"Error checking daytona daemon status: {e}")
+            return False
     
     @property
     def process(self):
@@ -703,8 +823,9 @@ class DockerSandboxManager:
         """Check if Docker sandbox manager is available."""
         return self._initialized and self.client is not None
     
-    async def create_sandbox(self, password: str, project_id: str = None) -> DockerSandbox:
-        """Create a new Docker sandbox."""
+    async def create_sandbox(self, password: str, project_id: str = None, 
+                           inject_daytona_daemon: bool = True) -> DockerSandbox:
+        """Create a new Docker sandbox with optional daytona daemon injection."""
         if not self.is_available:
             raise Exception("Docker sandbox manager is not available")
             
@@ -726,6 +847,7 @@ class DockerSandboxManager:
                 'ports': {
                     '5900/tcp': None,  # VNC port
                     '9222/tcp': None,  # Chrome debugging port
+                    '2080/tcp': None,  # Daytona daemon port (for daemon-proxy)
                 },
                 'volumes': {
                     '/tmp/.X11-unix': {'bind': '/tmp/.X11-unix', 'mode': 'rw'},
@@ -742,6 +864,34 @@ class DockerSandboxManager:
             
             # Wait for container to be ready
             await self._wait_for_container_ready(container.id)
+            
+            # Inject daytona daemon if requested
+            if inject_daytona_daemon:
+                try:
+                    # Use existing daemon-proxy injection functionality
+                    from backend.extensions.daemon_proxy.daemon_proxy import DaemonManager, Config
+                    
+                    # Get configuration from environment variables
+                    binary_path = os.getenv('DAEMON_BINARY_PATH', '/app/daemon-proxy/daytona-daemon-static')
+                    injection_method = os.getenv('DAEMON_INJECTION_METHOD', 'copy')
+                    
+                    # Create daemon manager with Docker injection mode
+                    daemon_config = Config()
+                    daemon_config.set("daemon.mode", "docker")
+                    daemon_config.set("daemon.port", 2080)
+                    daemon_config.set("daemon.container_name", container.id)
+                    daemon_config.set("daemon.injection_mode", "volume")
+                    daemon_config.set("daemon.injection_method", injection_method)  # 使用配置的注入方式
+                    daemon_config.set("daemon.binary_source_path", binary_path)
+                    daemon_config.set("daemon.startup_timeout", 30)
+                    
+                    daemon_manager = DaemonManager(daemon_config)
+                    await daemon_manager.start()
+                    
+                    logger.info(f"Successfully injected daytona daemon into container {container.id} using {injection_method} method")
+                except Exception as e:
+                    logger.warning(f"Daytona daemon injection failed: {e}")
+                    # Continue without daemon injection - sandbox will still work
             
             return DockerSandbox(container.id, self.client)
             

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单静态网站 - Daemon Proxy 测试</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Daemon Proxy 静态网站预览测试</h1>
+            <p class="subtitle">这是一个简单的静态网站，用于测试 daemon-proxy 的预览功能</p>
+        </header>
+        
+        <main>
+            <section class="feature-section">
+                <h2>✨ 功能特性</h2>
+                <div class="features">
+                    <div class="feature-card">
+                        <h3>📱 响应式设计</h3>
+                        <p>支持各种设备尺寸的显示</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🎨 现代样式</h3>
+                        <p>使用 CSS3 和现代设计理念</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>⚡ 快速加载</h3>
+                        <p>优化的静态资源加载</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="test-section">
+                <h2>🧪 测试信息</h2>
+                <div class="test-info">
+                    <p><strong>测试时间：</strong> <span id="current-time"></span></p>
+                    <p><strong>用户代理：</strong> <span id="user-agent"></span></p>
+                    <p><strong>页面URL：</strong> <span id="page-url"></span></p>
+                </div>
+            </section>
+            
+            <section class="interactive-section">
+                <h2>🎮 交互测试</h2>
+                <button id="test-button" class="test-button">点击测试 JavaScript</button>
+                <div id="test-result" class="test-result"></div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 Daemon Proxy E2E 测试 - 静态网站预览功能</p>
+        </footer>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

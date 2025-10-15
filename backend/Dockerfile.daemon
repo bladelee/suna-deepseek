@@ -1,0 +1,85 @@
+# 支持daemon-proxy的Backend API服务
+# 包含所有daemon-proxy相关功能和配置
+FROM ghcr.nju.edu.cn/astral-sh/uv:python3.11-alpine
+
+ENV ENV_MODE production
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+WORKDIR /app
+
+# 安装系统依赖，包括Docker客户端工具
+RUN apk add --no-cache curl git docker-cli
+
+# Install Python dependencies
+COPY pyproject.toml uv.lock ./
+ENV UV_LINK_MODE=copy
+ENV UV_CACHE_DIR=/root/.cache/uv
+
+# Create a minimal .env file for build context
+RUN echo "ENV_MODE=production" > .env && \
+    echo "USE_LOCAL_DOCKER_SANDBOX=true" >> .env && \
+    echo "REDIS_HOST=redis" >> .env && \
+    echo "REDIS_PORT=6379" >> .env && \
+    echo "LOG_LEVEL=INFO" >> .env
+
+# Install dependencies - allow uv to update lockfile if needed
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --quiet || \
+    (echo "uv sync failed, trying without cache..." && \
+     uv sync --quiet)
+
+# Copy application code
+COPY . .
+
+# 创建daemon-proxy目录
+RUN mkdir -p /app/daemon-proxy
+
+# 复制daemon二进制文件到容器内
+COPY sandbox/daemon-proxy/daytona-daemon-static /app/daemon-proxy/daytona-daemon-static
+
+# 复制daemon-proxy配置文件
+COPY dockers/config.daemon.yaml /app/config.daemon.yaml
+
+# 复制启动脚本
+COPY dockers/start-daemon-proxy.sh /app/scripts/start-daemon-proxy.sh
+
+# 设置权限
+RUN chmod +x /app/daemon-proxy/daytona-daemon-static && \
+    chmod +x /app/scripts/start-daemon-proxy.sh
+
+# 验证daemon二进制文件
+RUN ls -la /app/daemon-proxy/daytona-daemon-static
+
+# Calculate optimal worker count based on 16 vCPUs
+# Using (2*CPU)+1 formula for CPU-bound applications
+ENV WORKERS=7
+ENV THREADS=2
+ENV WORKER_CONNECTIONS=2000
+
+# 基础环境变量
+ENV PYTHONPATH=/app
+
+# daemon-proxy相关环境变量
+ENV DAEMON_BINARY_PATH=/app/daemon-proxy/daytona-daemon-static
+ENV DAEMON_INJECTION_METHOD=copy
+ENV DAEMON_INJECTION_MODE=volume
+ENV DAEMON_PORT=2080
+ENV DAEMON_STARTUP_TIMEOUT=30
+ENV DAEMON_CONFIG_FILE=/app/config.daemon.yaml
+
+# 安全配置
+ENV SECURITY_ENABLED=false
+
+# 日志配置
+ENV LOG_LEVEL=INFO
+
+# 暴露端口
+EXPOSE 8000
+
+# 健康检查 - 包含daemon-proxy状态检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health && \
+        curl -f http://localhost:8000/api/daemon-proxy/service/status || exit 1
+
+# 使用daemon-proxy启动脚本
+CMD ["/app/scripts/start-daemon-proxy.sh"]

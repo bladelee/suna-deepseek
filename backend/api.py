@@ -22,6 +22,7 @@ import uuid
 from agent import api as agent_api
 
 from sandbox import api as sandbox_api
+from sandbox.daemon_proxy_integration import create_daemon_proxy_router
 from services import billing as billing_api
 from flags import api as feature_flags_api
 from services import transcription as transcription_api
@@ -164,6 +165,7 @@ api_router = APIRouter()
 # Include all API routers without individual prefixes
 api_router.include_router(agent_api.router)
 api_router.include_router(sandbox_api.router)
+api_router.include_router(create_daemon_proxy_router())
 api_router.include_router(billing_api.router)
 api_router.include_router(feature_flags_api.router)
 api_router.include_router(api_keys_api.router)
@@ -199,12 +201,14 @@ api_router.include_router(composio_api.router)
 
 @api_router.get("/health")
 async def health_check():
+    """最简单的健康检查端点 - 不依赖外部服务"""
     logger.debug("Health check endpoint called")
     return {
         "status": "ok", 
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "instance_id": instance_id,
-        "environment": config.ENV_MODE.value
+        "environment": config.ENV_MODE.value,
+        "message": "Backend service is running"
     }
 
 @api_router.get("/config")

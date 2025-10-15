@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  daemon-proxy:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - DAEMON_PROXY_HOST=0.0.0.0
+      - DAEMON_PROXY_PORT=8080
+      - DAEMON_MODE=host
+      - DAEMON_PORT=2280
+      - DAEMON_PATH=/usr/local/bin/daytona
+      - SECURITY_ENABLED=false
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./logs:/app/logs
+      - ./config.yaml:/app/config.yaml:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 示例：包含daemon的容器
+  sandbox-with-daemon:
+    image: ubuntu:20.04
+    command: |
+      bash -c "
+        apt-get update && 
+        apt-get install -y python3 python3-pip curl &&
+        python3 -m http.server 8080 &
+        # 这里应该启动daemon，但为了演示，我们只启动一个简单的HTTP服务
+        tail -f /dev/null
+      "
+    ports:
+      - "8081:8080"
+    environment:
+      - DISPLAY=:1
+    volumes:
+      - ./daemon:/usr/local/bin/daytona:ro
+    networks:
+      - daemon-network
+
+networks:
+  daemon-network:
+    driver: bridge
+
+volumes:
+  logs:
+

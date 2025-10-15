@@ -1,0 +1,158 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./backend/services/docker/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf --save 60 1 --loglevel warning
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  backend:
+    image: ghcr.io/suna-ai/suna-backend:latest
+    platform: linux/amd64
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.daemon
+    dns:
+      - 8.8.8.8        # 谷歌公共 DNS
+      - 114.114.114.114  # 国内公共 DNS
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./backend/.env:/app/.env
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # 开发环境：挂载本地daemon二进制文件，支持热更新
+      - ./backend/sandbox/daemon-proxy/daytona-daemon-static:/app/daemon-proxy/daytona-daemon-static:ro
+      # 开发环境：挂载源代码，支持热重载
+      - ./backend:/app:ro
+    env_file:
+      - ./backend/.env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - REDIS_SSL=False
+      - LOG_LEVEL=DEBUG
+      - ENVIRONMENT=development
+      - USE_LOCAL_DOCKER_SANDBOX=true
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      # daemon-proxy配置
+      - DAEMON_BINARY_PATH=/app/daemon-proxy/daytona-daemon-static
+      - HOST_DAEMON_BINARY_PATH=./backend/sandbox/daemon-proxy/daytona-daemon-static
+      - DAEMON_INJECTION_METHOD=mount
+      - DAEMON_INJECTION_MODE=volume
+      - DAEMON_PORT=2080
+      - DAEMON_STARTUP_TIMEOUT=30
+      - DAEMON_CONFIG_FILE=/app/config.daemon.yaml
+      - SECURITY_ENABLED=false
+      # 开发环境资源配置
+      - WORKERS=1
+      - THREADS=1
+      - WORKER_CONNECTIONS=1000
+    depends_on:
+      redis:
+        condition: service_healthy
+      worker:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - suna-network
+    # 开发环境健康检查
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:8000/api/health && curl -f http://localhost:8000/api/daemon-proxy/service/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # 开发环境资源限制（更宽松）
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  worker:
+    image: ghcr.io/suna-ai/suna-backend:latest
+    platform: linux/amd64
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.daemon
+    command: uv run dramatiq --skip-logging --processes 4 --threads 4 run_agent_background
+    volumes:
+      - ./backend/.env:/app/.env:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # 开发环境：挂载本地daemon二进制文件，支持热更新
+      - ./backend/sandbox/daemon-proxy/daytona-daemon-static:/app/daemon-proxy/daytona-daemon-static:ro
+      # 开发环境：挂载源代码，支持热重载
+      - ./backend:/app:ro
+    dns:
+      - 8.8.8.8        # 谷歌公共 DNS
+      - 114.114.114.114  # 国内公共 DNS
+    env_file:
+      - ./backend/.env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - REDIS_SSL=False
+      - LOG_LEVEL=DEBUG
+      - ENVIRONMENT=development
+      - USE_LOCAL_DOCKER_SANDBOX=true
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      # daemon-proxy配置
+      - DAEMON_BINARY_PATH=/app/daemon-proxy/daytona-daemon-static
+      - HOST_DAEMON_BINARY_PATH=./backend/sandbox/daemon-proxy/daytona-daemon-static
+      - DAEMON_INJECTION_METHOD=mount
+      - DAEMON_INJECTION_MODE=volume
+      - DAEMON_PORT=2080
+      - DAEMON_STARTUP_TIMEOUT=30
+      - DAEMON_CONFIG_FILE=/app/config.daemon.yaml
+      - SECURITY_ENABLED=false
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - suna-network
+    # 开发环境资源限制（更宽松）
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+
+  frontend:
+    init: true
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3000"
+    volumes:
+      - ./frontend/.env.local:/app/.env.local:ro
+      # 开发环境：挂载源代码，支持热重载
+      - ./frontend:/app:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - suna-network
+
+volumes:
+  redis_data:
+
+networks:
+  suna-network:
+    driver: bridge
