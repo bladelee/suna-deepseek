@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: Dockerfile.daemon
+    ports:
+      - "8000:8000"
+    volumes:
+      # 挂载Docker socket以访问Docker daemon
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      # 基础环境变量
+      - PYTHONPATH=/app
+      - LOG_LEVEL=info
+      - ENVIRONMENT=production
+      
+      # daemon-proxy配置
+      - DAEMON_BINARY_PATH=/app/daemon-proxy/daytona-daemon-static
+      - DAEMON_INJECTION_METHOD=copy
+      - DAEMON_INJECTION_MODE=volume
+      - DAEMON_PORT=2080
+      - DAEMON_STARTUP_TIMEOUT=30
+      - DAEMON_CONFIG_FILE=/app/config.daemon.yaml
+      - SECURITY_ENABLED=false
+      
+      # 其他配置
+      - WORKERS=7
+      - THREADS=2
+      - WORKER_CONNECTIONS=2000
+    restart: unless-stopped
+    networks:
+      - suna-network
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:8000/health && curl -f http://localhost:8000/api/daemon-proxy/service/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+networks:
+  suna-network:
+    driver: bridge

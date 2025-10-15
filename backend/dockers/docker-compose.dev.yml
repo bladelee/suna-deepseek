@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      # 挂载Docker socket以访问Docker daemon
+      - /var/run/docker.sock:/var/run/docker.sock
+      # 开发环境：挂载本地daemon二进制文件，支持热更新
+      - ./backend/sandbox/daemon-proxy/daytona-daemon-static:/app/daemon-proxy/daytona-daemon-static:ro
+      # 开发环境：挂载源代码，支持热重载
+      - ./backend:/app:ro
+    environment:
+      # Daemon二进制文件路径
+      - DAEMON_BINARY_PATH=/app/daemon-proxy/daytona-daemon-static
+      # 开发环境变量
+      - PYTHONPATH=/app
+      - LOG_LEVEL=debug
+      - ENVIRONMENT=development
+    restart: unless-stopped
+    networks:
+      - suna-network
+
+networks:
+  suna-network:
+    driver: bridge

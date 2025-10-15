@@ -1,0 +1,51 @@
+# 开发环境 Dockerfile - 不包含源代码，通过挂载提供
+FROM ghcr.nju.edu.cn/astral-sh/uv:python3.11-alpine
+
+# 设置工作目录
+WORKDIR /app
+
+# 安装系统依赖
+RUN apk add --no-cache curl git docker-cli
+
+# 复制依赖文件
+COPY pyproject.toml uv.lock ./
+
+# 安装 Python 依赖
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --quiet || \
+    (echo "uv sync failed, trying without cache..." && \
+     uv sync --quiet)
+
+# 创建必要的目录结构
+RUN mkdir -p /app/daemon-proxy
+
+# 复制 daemon 二进制文件（开发环境会通过挂载覆盖）
+COPY sandbox/daemon-proxy/daytona-daemon-static /app/daemon-proxy/daytona-daemon-static
+
+# 复制配置文件
+COPY dockers/config.daemon.yaml /app/config.daemon.yaml
+
+# 复制启动脚本
+COPY dockers/start-dev-daemon-proxy.sh /app/scripts/start-dev-daemon-proxy.sh
+
+# 设置执行权限
+RUN chmod +x /app/daemon-proxy/daytona-daemon-static && \
+    chmod +x /app/scripts/start-dev-daemon-proxy.sh
+
+# 验证文件
+RUN ls -la /app/daemon-proxy/daytona-daemon-static
+
+# 开发环境：使用开发配置
+ENV ENV_MODE=development
+ENV USE_LOCAL_DOCKER_SANDBOX=true
+ENV REDIS_HOST=redis
+ENV REDIS_PORT=6379
+ENV LOG_LEVEL=DEBUG
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/api/health && \
+        curl -f http://localhost:8000/api/daemon-proxy/service/status || exit 1
+
+# 开发环境启动命令
+CMD ["/app/scripts/start-dev-daemon-proxy.sh"]

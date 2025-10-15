@@ -1,6 +1,10 @@
 #!/bin/bash
 
 # Backend Docker 构建脚本
+# 用途: 简化 Docker 镜像的构建、运行、停止和清理操作
+# 支持基础版本和 daemon-proxy 版本
+# 作者: Suna Team
+# 更新: 2024-10-15
 
 set -e
 

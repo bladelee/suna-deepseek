@@ -1,7 +1,10 @@
 #!/bin/bash
 
 # Docker环境检查脚本
-# 用于诊断Docker沙盒环境问题
+# 用途: 诊断Docker沙盒环境问题，检查Docker服务、权限、资源等
+# 适用: 开发环境故障排除
+# 作者: Suna Team
+# 更新: 2024-10-15
 
 set -e
 

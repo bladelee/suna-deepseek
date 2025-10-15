@@ -1,7 +1,10 @@
 #!/bin/bash
 
 # Daemon二进制文件管理脚本
-# 用于设置和管理host上的daemon二进制文件
+# 用途: 设置和管理host上的daemon二进制文件，支持安装、更新、验证等操作
+# 适用: 生产环境部署，daemon-proxy二进制文件管理
+# 作者: Suna Team
+# 更新: 2024-10-15
 
 set -e
 
